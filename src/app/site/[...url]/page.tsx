@@ -5,6 +5,7 @@ import { SitemapTree } from '@/components/SitemapTree';
 import { SitemapTable } from '@/components/SitemapTable';
 import { SitemapGrid } from '@/components/SitemapGrid';
 import { DetailPanel } from '@/components/DetailPanel';
+import { StatsDashboard } from '@/components/StatsDashboard';
 import { SitemapNode, ScanResult } from '@/lib/sitemap-scanner';
 import { Search, Loader2, AlertCircle, LayoutList, Grid, ListTree, ArrowLeft, Home } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -149,6 +150,9 @@ export default function SiteExplorer({ params }: { params: Promise<{ url: string
             {/* Controls & Results */}
             {!loading && !error && result && (
                 <div className="flex-1 flex flex-col min-h-0 max-w-7xl mx-auto w-full gap-4">
+                    {/* Stats Dashboard */}
+                    <StatsDashboard result={result} />
+
                     {/* Toolbar */}
                     <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                         {/* Search */}
