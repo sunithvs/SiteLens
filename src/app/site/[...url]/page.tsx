@@ -113,7 +113,7 @@ export default function SiteExplorer({ params }: { params: Promise<{ url: string
     }
 
     return (
-        <main className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-8 flex flex-col h-screen">
+        <main className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-8 flex flex-col">
             {/* Header */}
             <div className="max-w-7xl mx-auto w-full mb-6 flex-shrink-0 flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -130,14 +130,14 @@ export default function SiteExplorer({ params }: { params: Promise<{ url: string
             </div>
 
             {loading && (
-                <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
+                <div className="flex-1 flex flex-col items-center justify-center text-gray-500 min-h-[400px]">
                     <Loader2 className="animate-spin mb-4" size={48} />
                     <p>Scanning sitemap...</p>
                 </div>
             )}
 
             {error && (
-                <div className="flex-1 flex flex-col items-center justify-center text-red-500">
+                <div className="flex-1 flex flex-col items-center justify-center text-red-500 min-h-[400px]">
                     <AlertCircle className="mb-4" size={48} />
                     <p className="text-lg font-medium">Scan Failed</p>
                     <p className="text-sm opacity-80">{error}</p>
@@ -149,12 +149,12 @@ export default function SiteExplorer({ params }: { params: Promise<{ url: string
 
             {/* Controls & Results */}
             {!loading && !error && result && (
-                <div className="flex-1 flex flex-col min-h-0 max-w-7xl mx-auto w-full gap-4">
+                <div className="flex-1 flex flex-col max-w-7xl mx-auto w-full gap-6">
                     {/* Stats Dashboard */}
                     <StatsDashboard result={result} />
 
                     {/* Toolbar */}
-                    <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 sticky top-4 z-10">
                         {/* Search */}
                         <div className="relative w-full sm:w-64">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
@@ -193,9 +193,9 @@ export default function SiteExplorer({ params }: { params: Promise<{ url: string
                         </div>
                     </div>
 
-                    {/* Main Content Area - Full Width */}
-                    <div className="flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700 min-h-0">
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center">
+                    {/* Main Content Area - Fixed Height with Scroll */}
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700 h-[600px] md:h-[700px]">
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center flex-shrink-0">
                             <div>
                                 <h2 className="font-semibold text-gray-900 dark:text-white">Structure</h2>
                                 <div className="text-xs text-gray-500 mt-1">
