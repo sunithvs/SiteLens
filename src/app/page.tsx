@@ -1,9 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { SitemapTree } from '@/components/SitemapTree';
+import { SitemapTable } from '@/components/SitemapTable';
+import { SitemapGrid } from '@/components/SitemapGrid';
+import { DetailModal } from '@/components/DetailModal';
 import { SitemapNode, ScanResult } from '@/lib/sitemap-scanner';
-import { Search, Loader2, AlertCircle } from 'lucide-react';
+import { Search, Loader2, AlertCircle, LayoutList, Grid, ListTree } from 'lucide-react';
+import { clsx } from 'clsx';
+
+type ViewMode = 'tree' | 'table' | 'grid';
 
 export default function Home() {
   const [url, setUrl] = useState('');
@@ -11,6 +17,8 @@ export default function Home() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<SitemapNode | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('tree');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,16 +50,37 @@ export default function Home() {
     }
   };
 
+  const filteredNodes = useMemo(() => {
+    if (!result) return [];
+    if (!searchQuery) return result.nodes;
+
+    const lowerQuery = searchQuery.toLowerCase();
+    const matches = (node: SitemapNode) => node.url.toLowerCase().includes(lowerQuery);
+
+    // Recursive filter for tree
+    const filterTree = (nodes: SitemapNode[]): SitemapNode[] => {
+      return nodes.reduce<SitemapNode[]>((acc, node) => {
+        const children = node.children ? filterTree(node.children) : [];
+        if (matches(node) || children.length > 0) {
+          acc.push({ ...node, children });
+        }
+        return acc;
+      }, []);
+    };
+
+    return filterTree(result.nodes);
+  }, [result, searchQuery]);
+
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-8 flex flex-col h-screen">
       {/* Header & Input */}
-      <div className="max-w-4xl mx-auto mb-8 text-center">
-        <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">XML Nexus</h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-8">
+      <div className="max-w-4xl mx-auto w-full mb-6 text-center flex-shrink-0">
+        <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">XML Nexus</h1>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
           Sitemap Explorer & Visualizer
         </p>
 
-        <form onSubmit={handleScan} className="flex gap-2 max-w-xl mx-auto">
+        <form onSubmit={handleScan} className="flex gap-2 max-w-xl mx-auto mb-6">
           <input
             type="text"
             value={url}
@@ -70,91 +99,107 @@ export default function Home() {
         </form>
 
         {error && (
-          <div className="mt-4 p-4 bg-red-50 text-red-600 rounded-lg flex items-center justify-center gap-2">
+          <div className="p-4 bg-red-50 text-red-600 rounded-lg flex items-center justify-center gap-2">
             <AlertCircle size={20} />
             {error}
           </div>
         )}
       </div>
 
-      {/* Results */}
+      {/* Controls & Results */}
       {result && (
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-300px)]">
-          {/* Sidebar - Tree */}
-          <div className="md:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-              <h2 className="font-semibold text-gray-900 dark:text-white">Sitemap Structure</h2>
-              <div className="text-xs text-gray-500 mt-1">
-                {result.totalSitemaps} sitemaps, {result.totalUrls} URLs found
+        <div className="flex-1 flex flex-col min-h-0 max-w-7xl mx-auto w-full gap-4">
+          {/* Toolbar */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            {/* Search */}
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+              <input
+                type="text"
+                placeholder="Filter URLs..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+              />
+            </div>
+
+            {/* View Toggles */}
+            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+              <button
+                onClick={() => setViewMode('tree')}
+                className={clsx("p-2 rounded-md transition-all", viewMode === 'tree' ? "bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-400" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300")}
+                title="Tree View"
+              >
+                <ListTree size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={clsx("p-2 rounded-md transition-all", viewMode === 'table' ? "bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-400" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300")}
+                title="Table View"
+              >
+                <LayoutList size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={clsx("p-2 rounded-md transition-all", viewMode === 'grid' ? "bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-400" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300")}
+                title="Grid View"
+              >
+                <Grid size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* Main Content Area - Full Width */}
+          <div className="flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700 min-h-0">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center">
+              <div>
+                <h2 className="font-semibold text-gray-900 dark:text-white">Structure</h2>
+                <div className="text-xs text-gray-500 mt-1">
+                  {result.totalSitemaps} sitemaps, {result.totalUrls} URLs
+                </div>
               </div>
             </div>
+
             <div className="flex-1 overflow-auto p-2 text-gray-900 dark:text-gray-200">
-              {result.nodes.map((node, i) => (
-                <SitemapTree
-                  key={i}
-                  node={node}
+              {viewMode === 'tree' && (
+                filteredNodes.map((node, i) => (
+                  <SitemapTree
+                    key={i}
+                    node={node}
+                    onSelect={setSelectedNode}
+                    selectedNode={selectedNode}
+                  />
+                ))
+              )}
+              {viewMode === 'table' && (
+                <SitemapTable
+                  nodes={filteredNodes}
                   onSelect={setSelectedNode}
                   selectedNode={selectedNode}
                 />
-              ))}
-            </div>
-          </div>
-
-          {/* Main - Details */}
-          <div className="md:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 overflow-auto text-gray-900 dark:text-gray-200">
-            {selectedNode ? (
-              <div>
-                <h2 className="text-xl font-bold mb-4 break-all">{selectedNode.url}</h2>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                    <div className="text-sm text-gray-500">Type</div>
-                    <div className="font-medium capitalize">{selectedNode.type}</div>
-                  </div>
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                    <div className="text-sm text-gray-500">Depth</div>
-                    <div className="font-medium">{selectedNode.depth}</div>
-                  </div>
-                  {selectedNode.lastmod && (
-                    <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                      <div className="text-sm text-gray-500">Last Modified</div>
-                      <div className="font-medium">{selectedNode.lastmod}</div>
-                    </div>
-                  )}
-                  {selectedNode.changefreq && (
-                    <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                      <div className="text-sm text-gray-500">Change Frequency</div>
-                      <div className="font-medium">{selectedNode.changefreq}</div>
-                    </div>
-                  )}
-                  {selectedNode.priority && (
-                    <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                      <div className="text-sm text-gray-500">Priority</div>
-                      <div className="font-medium">{selectedNode.priority}</div>
-                    </div>
-                  )}
+              )}
+              {viewMode === 'grid' && (
+                <SitemapGrid
+                  nodes={filteredNodes}
+                  onSelect={setSelectedNode}
+                  selectedNode={selectedNode}
+                />
+              )}
+              {filteredNodes.length === 0 && (
+                <div className="p-8 text-center text-gray-400">
+                  No results found matching "{searchQuery}"
                 </div>
-
-                {selectedNode.children && (
-                  <div className="mt-6">
-                    <h3 className="font-semibold mb-2">Children ({selectedNode.children.length})</h3>
-                    <div className="max-h-60 overflow-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2">
-                      {selectedNode.children.map((child, i) => (
-                        <div key={i} className="py-1 px-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded text-sm truncate">
-                          {child.url}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="h-full flex items-center justify-center text-gray-400">
-                Select a node to view details
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}
+
+      {/* Detail Modal */}
+      <DetailModal
+        node={selectedNode}
+        onClose={() => setSelectedNode(null)}
+      />
     </main>
   );
 }
