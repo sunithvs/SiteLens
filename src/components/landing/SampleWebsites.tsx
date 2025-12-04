@@ -6,9 +6,6 @@ import { ExternalLink } from 'lucide-react';
 
 const SAMPLES = [
     { name: 'sunithvs.com', url: 'https://sunithvs.com' },
-    { name: 'devb.io', url: 'https://devb.io' },
-    { name: 'seats.aero', url: 'https://seats.aero' },
-    { name: 'vercel.com', url: 'https://vercel.com' },
 ];
 
 export function SampleWebsites() {
