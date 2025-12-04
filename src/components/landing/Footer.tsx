@@ -1,5 +1,5 @@
 import React from 'react';
-import { Github, Twitter, Linkedin } from 'lucide-react';
+import { Globe, Code2 } from 'lucide-react';
 
 export function Footer() {
     return (
@@ -26,14 +26,18 @@ export function Footer() {
                     <div>
                         <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Connect</h4>
                         <div className="flex gap-4">
-                            <a href="#" className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                                <Github size={20} />
-                            </a>
-                            <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors">
-                                <Twitter size={20} />
-                            </a>
-                            <a href="#" className="text-gray-400 hover:text-blue-600 transition-colors">
-                                <Linkedin size={20} />
+                            <a
+                                href="http://devb.io/sunithvs"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-gray-400 hover:opacity-80 transition-opacity"
+                                title="Developer Profile"
+                            >
+                                <img
+                                    src="https://raw.githubusercontent.com/sunithvs/devb.io/refs/heads/main/docs/images/logo-white.png"
+                                    alt="devb.io"
+                                    className="h-8 w-auto object-contain transition-opacity invert dark:invert-0"
+                                />
                             </a>
                         </div>
                     </div>

@@ -98,9 +98,9 @@ export function DetailPanel({ node }: DetailPanelProps) {
     }
 
     return (
-        <div className="h-full flex flex-col lg:flex-row gap-6 overflow-hidden">
+        <div className="h-full flex flex-col lg:flex-row gap-6 overflow-y-auto lg:overflow-hidden">
             {/* Left Column: Data & Analysis */}
-            <div className="flex-1 flex flex-col overflow-y-auto pr-2 min-w-0">
+            <div className="flex-1 lg:flex-1 flex flex-col lg:overflow-y-auto lg:pr-2 min-w-0">
                 <div className="mb-6">
                     <div className="flex items-start justify-between gap-4 mb-4">
                         <h2 className="text-xl font-bold break-all text-gray-900 dark:text-white">{node.url}</h2>
@@ -256,7 +256,7 @@ export function DetailPanel({ node }: DetailPanelProps) {
 
             {/* Right Column: Desktop Preview */}
             {node.type === 'url' && (
-                <div className="flex-1 lg:max-w-[50%] flex flex-col min-h-[500px] lg:min-h-0">
+                <div className="flex-none lg:flex-1 lg:max-w-[50%] flex flex-col min-h-[500px] lg:min-h-0 pb-6 lg:pb-0">
                     <div className="flex items-center justify-between mb-2">
                         <h3 className="font-semibold text-gray-900 dark:text-white">Desktop Preview</h3>
                         <button

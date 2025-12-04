@@ -9,6 +9,7 @@ import { StatsDashboard } from '@/components/StatsDashboard';
 import { SitemapNode, ScanResult } from '@/lib/sitemap-scanner';
 import { Search, Loader2, AlertCircle, LayoutList, Grid, ListTree, ArrowLeft, Home } from 'lucide-react';
 import { clsx } from 'clsx';
+import { Logo } from '@/components/Logo';
 import Link from 'next/link';
 
 type ViewMode = 'tree' | 'table' | 'grid';
@@ -119,13 +120,12 @@ export default function SiteExplorer({ params }: { params: Promise<{ url: string
                 <div className="max-w-[1920px] mx-auto px-4 h-16 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-4 min-w-0">
                         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
-                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
-                                SL
-                            </div>
+                            <Logo className="w-8 h-8" />
                             <span className="font-bold text-xl hidden sm:block text-gray-900 dark:text-white">SiteLens</span>
                         </Link>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-md" title={targetUrl}>
-                            Scanning: {targetUrl}
+                        <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-[200px] sm:max-w-md" title={targetUrl}>
+                            {targetUrl}
                         </p>
                     </div>
                 </div>
@@ -151,91 +151,99 @@ export default function SiteExplorer({ params }: { params: Promise<{ url: string
 
             {/* Controls & Results */}
             {!loading && !error && result && (
-                <div className="flex-1 flex flex-col max-w-7xl mx-auto w-full gap-6">
-                    {/* Stats Dashboard */}
-                    <StatsDashboard result={result} />
+                <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                    <div className="flex-1 flex flex-col max-w-[1920px] mx-auto w-full h-full p-4 gap-4 overflow-y-auto">
 
-                    {/* Toolbar */}
-                    <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 sticky top-4 z-10">
-                        {/* Search */}
-                        <div className="relative w-full sm:w-64">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                            <input
-                                type="text"
-                                placeholder="Filter URLs..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
-                            />
+                        {/* Stats Dashboard - Stacks on mobile */}
+                        <div className="flex-none">
+                            <StatsDashboard result={result} />
                         </div>
 
-                        {/* View Toggles */}
-                        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
-                            <button
-                                onClick={() => setViewMode('tree')}
-                                className={clsx("p-2 rounded-md transition-all", viewMode === 'tree' ? "bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-400" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300")}
-                                title="Tree View"
-                            >
-                                <ListTree size={18} />
-                            </button>
-                            <button
-                                onClick={() => setViewMode('table')}
-                                className={clsx("p-2 rounded-md transition-all", viewMode === 'table' ? "bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-400" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300")}
-                                title="Table View"
-                            >
-                                <LayoutList size={18} />
-                            </button>
-                            <button
-                                onClick={() => setViewMode('grid')}
-                                className={clsx("p-2 rounded-md transition-all", viewMode === 'grid' ? "bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-400" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300")}
-                                title="Grid View"
-                            >
-                                <Grid size={18} />
-                            </button>
-                        </div>
-                    </div>
+                        {/* Toolbar & Content Container */}
+                        <div className="flex-1 flex flex-col min-h-[500px] bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                            {/* Toolbar */}
+                            <div className="flex-none p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex flex-col sm:flex-row gap-4 justify-between items-center">
+                                <div className="flex items-center gap-4 w-full sm:w-auto">
+                                    <div>
+                                        <h2 className="font-semibold text-gray-900 dark:text-white">Structure</h2>
+                                        <div className="text-xs text-gray-500 mt-1">
+                                            {result.totalSitemaps} sitemaps, {result.totalUrls} URLs
+                                        </div>
+                                    </div>
+                                </div>
 
-                    {/* Main Content Area - Fixed Height with Scroll */}
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700 h-[600px] md:h-[700px]">
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center flex-shrink-0">
-                            <div>
-                                <h2 className="font-semibold text-gray-900 dark:text-white">Structure</h2>
-                                <div className="text-xs text-gray-500 mt-1">
-                                    {result.totalSitemaps} sitemaps, {result.totalUrls} URLs
+                                <div className="flex items-center gap-3 w-full sm:w-auto">
+                                    {/* Search */}
+                                    <div className="relative flex-1 sm:w-64">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                        <input
+                                            type="text"
+                                            placeholder="Filter URLs..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                                        />
+                                    </div>
+
+                                    {/* View Toggles */}
+                                    <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg flex-shrink-0">
+                                        <button
+                                            onClick={() => setViewMode('tree')}
+                                            className={clsx("p-2 rounded-md transition-all", viewMode === 'tree' ? "bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-400" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300")}
+                                            title="Tree View"
+                                        >
+                                            <ListTree size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode('table')}
+                                            className={clsx("p-2 rounded-md transition-all", viewMode === 'table' ? "bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-400" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300")}
+                                            title="Table View"
+                                        >
+                                            <LayoutList size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode('grid')}
+                                            className={clsx("p-2 rounded-md transition-all", viewMode === 'grid' ? "bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-400" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300")}
+                                            title="Grid View"
+                                        >
+                                            <Grid size={18} />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="flex-1 overflow-auto p-2 text-gray-900 dark:text-gray-200">
-                            {viewMode === 'tree' && (
-                                filteredNodes.map((node, i) => (
-                                    <SitemapTree
-                                        key={i}
-                                        node={node}
+                            {/* Content Area */}
+                            <div className="flex-1 overflow-auto p-2 text-gray-900 dark:text-gray-200 min-h-0">
+                                {viewMode === 'tree' && (
+                                    filteredNodes.map((node, i) => (
+                                        <SitemapTree
+                                            key={i}
+                                            node={node}
+                                            onSelect={setSelectedNode}
+                                            selectedNode={selectedNode}
+                                        />
+                                    ))
+                                )}
+                                {viewMode === 'table' && (
+                                    <SitemapTable
+                                        nodes={filteredNodes}
                                         onSelect={setSelectedNode}
                                         selectedNode={selectedNode}
                                     />
-                                ))
-                            )}
-                            {viewMode === 'table' && (
-                                <SitemapTable
-                                    nodes={filteredNodes}
-                                    onSelect={setSelectedNode}
-                                    selectedNode={selectedNode}
-                                />
-                            )}
-                            {viewMode === 'grid' && (
-                                <SitemapGrid
-                                    nodes={filteredNodes}
-                                    onSelect={setSelectedNode}
-                                    selectedNode={selectedNode}
-                                />
-                            )}
-                            {filteredNodes.length === 0 && (
-                                <div className="p-8 text-center text-gray-400">
-                                    No results found matching "{searchQuery}"
-                                </div>
-                            )}
+                                )}
+                                {viewMode === 'grid' && (
+                                    <SitemapGrid
+                                        nodes={filteredNodes}
+                                        onSelect={setSelectedNode}
+                                        selectedNode={selectedNode}
+                                    />
+                                )}
+                                {filteredNodes.length === 0 && (
+                                    <div className="p-8 text-center text-gray-400">
+                                        No results found matching "{searchQuery}"
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -243,3 +251,4 @@ export default function SiteExplorer({ params }: { params: Promise<{ url: string
         </div>
     );
 }
+
