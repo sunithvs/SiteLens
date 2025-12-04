@@ -5,7 +5,7 @@ const TESTIMONIALS = [
     {
         name: 'Sarah Chen',
         role: 'SEO Specialist',
-        content: 'XML Nexus has completely changed how I audit client websites. The visual tree view makes it so easy to spot structural issues immediately.',
+        content: 'SiteLens has completely changed how I audit client websites. The visual tree view makes it so easy to spot structural issues immediately.',
         initials: 'SC'
     },
     {

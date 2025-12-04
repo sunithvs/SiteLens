@@ -10,16 +10,16 @@ const FAQS = [
         answer: 'A sitemap is a file where you provide information about the pages, videos, and other files on your site, and the relationships between them. Search engines like Google read this file to more intelligently crawl your site.'
     },
     {
-        question: 'Does XML Nexus store my data?',
-        answer: 'No. XML Nexus scans your sitemap in real-time. We do not store your sitemap data or crawl results permanently. Everything is processed on-the-fly for your session.'
+        question: 'Does SiteLens store my data?',
+        answer: 'No. SiteLens scans your sitemap in real-time. We do not store your sitemap data or crawl results permanently. Everything is processed on-the-fly for your session.'
     },
     {
         question: 'Can I scan large sitemaps?',
-        answer: 'Yes! XML Nexus is optimized for performance and can handle sitemaps with thousands of URLs. It uses a recursive scanning engine to handle nested sitemaps efficiently.'
+        answer: 'Yes! SiteLens is optimized for performance and can handle sitemaps with thousands of URLs. It uses a recursive scanning engine to handle nested sitemaps efficiently.'
     },
     {
         question: 'Is it free to use?',
-        answer: 'Yes, XML Nexus is completely free to use for analyzing public sitemaps.'
+        answer: 'Yes, SiteLens is completely free to use for analyzing public sitemaps.'
     }
 ];
 

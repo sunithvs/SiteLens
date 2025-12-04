@@ -43,7 +43,7 @@ export function Features() {
                         Everything you need to master your sitemap
                     </h2>
                     <p className="text-lg text-gray-600 dark:text-gray-400">
-                        XML Nexus provides a comprehensive suite of tools to help you visualize, analyze, and optimize your website's structure.
+                        SiteLens provides a comprehensive suite of tools to help you visualize, analyze, and optimize your website's structure.
                     </p>
                 </div>
 

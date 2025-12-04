@@ -49,12 +49,12 @@ export function Hero() {
                     </div>
 
                     <h1 className="text-5xl md:text-7xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight">
-                        Master Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Sitemap</span> Structure
+                        Visualize Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Sitemap</span> Instantly
                     </h1>
 
                     <p className="text-xl text-gray-600 dark:text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed">
-                        Visualize, analyze, and optimize your website's architecture.
-                        Uncover hidden SEO opportunities with our advanced sitemap explorer.
+                        Enter any URL to see its structure, analyze SEO, and uncover hidden pages.
+                        No sign-up required.
                     </p>
 
                     <div className="max-w-2xl mx-auto relative">
