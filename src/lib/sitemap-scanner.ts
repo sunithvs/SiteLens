@@ -1,4 +1,8 @@
 import { XMLParser } from 'fast-xml-parser';
+import { gunzip } from 'zlib';
+import { promisify } from 'util';
+
+const doGunzip = promisify(gunzip);
 
 export interface SitemapNode {
     url: string;
@@ -63,7 +67,7 @@ export class SitemapScanner {
                 headers: {
                     'User-Agent': 'XML-Nexus-Bot/1.0'
                 },
-                signal: AbortSignal.timeout(5000) // 5s timeout
+                signal: AbortSignal.timeout(10000) // Increased timeout for large files
             });
 
             if (!response.ok) {
@@ -71,11 +75,30 @@ export class SitemapScanner {
                 return null;
             }
 
-            const xmlText = await response.text();
+            const buffer = await response.arrayBuffer();
+            let xmlText = '';
+
+            // Check for GZIP magic number (1f 8b)
+            const bytes = new Uint8Array(buffer);
+            if (bytes.length > 1 && bytes[0] === 0x1f && bytes[1] === 0x8b) {
+                try {
+                    const decompressed = await doGunzip(buffer);
+                    xmlText = decompressed.toString('utf-8');
+                } catch (err: any) {
+                    this.errors.push(`Failed to decompress ${url}: ${err.message}`);
+                    return null;
+                }
+            } else {
+                xmlText = new TextDecoder().decode(buffer);
+            }
+
             // Basic validation
             if (!xmlText.trim().startsWith('<')) {
-                this.errors.push(`Invalid XML at ${url}`);
-                return null;
+                // Sometimes there might be whitespace or BOM
+                if (!xmlText.trim().includes('<')) {
+                    this.errors.push(`Invalid XML at ${url}`);
+                    return null;
+                }
             }
 
             const parsed = parser.parse(xmlText);
@@ -87,9 +110,7 @@ export class SitemapScanner {
                 let sitemaps = parsed.sitemapindex.sitemap;
                 if (!Array.isArray(sitemaps)) sitemaps = [sitemaps];
 
-                // Process children (limited concurrency could be added here, but for now sequential/parallel mix)
-                // For strict concurrency control we'd need a queue, but Promise.all with chunks is easier for MVP
-
+                // Process children
                 const childPromises = sitemaps.map((s: any) => {
                     const loc = s.loc;
                     return this.processUrl(loc, depth + 1);
@@ -135,7 +156,7 @@ export class SitemapScanner {
                     type: 'sitemap',
                     depth,
                     children, // These are terminal URLs
-                    lastmod: parsed.urlset.lastmod // Might not exist on urlset
+                    lastmod: parsed.urlset.lastmod
                 };
             } else {
                 this.errors.push(`Unknown XML format at ${url}`);
