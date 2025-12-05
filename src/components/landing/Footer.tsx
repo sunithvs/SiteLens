@@ -27,7 +27,7 @@ export function Footer() {
                         <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Connect</h4>
                         <div className="flex gap-4">
                             <a
-                                href="http://devb.io/sunithvs"
+                                href="http://devb.io/sunithvs?utm_source=sitelens"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-gray-400 hover:opacity-80 transition-opacity"
