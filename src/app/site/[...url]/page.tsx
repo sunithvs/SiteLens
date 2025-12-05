@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useMemo, use } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import Fuse from 'fuse.js';
 import { SitemapTree } from '@/components/SitemapTree';
 import { SitemapTable } from '@/components/SitemapTable';
 import { SitemapGrid } from '@/components/SitemapGrid';
 import { DetailPanel } from '@/components/DetailPanel';
 import { StatsDashboard } from '@/components/StatsDashboard';
 import { SitemapNode, ScanResult } from '@/lib/sitemap-scanner';
-import { Search, Loader2, AlertCircle, LayoutList, Grid, ListTree, ArrowLeft, Home } from 'lucide-react';
+import { Search, Loader2, AlertCircle, LayoutList, Grid, ListTree, ArrowLeft, Home, Maximize2, Minimize2 } from 'lucide-react';
 import { useHistory } from '@/hooks/useHistory';
 import { clsx } from 'clsx';
 import { Logo } from '@/components/Logo';
@@ -34,6 +35,7 @@ export default function SiteExplorer({ params }: { params: Promise<{ url: string
     const [selectedNode, setSelectedNode] = useState<SitemapNode | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('tree');
     const [searchQuery, setSearchQuery] = useState('');
+    const [isFullScreen, setIsFullScreen] = useState(false);
 
 
 
@@ -86,14 +88,31 @@ export default function SiteExplorer({ params }: { params: Promise<{ url: string
         if (!result) return [];
         if (!searchQuery) return result.nodes;
 
-        const lowerQuery = searchQuery.toLowerCase();
-        const matches = (node: SitemapNode) => node.url.toLowerCase().includes(lowerQuery);
+        // Flatten all nodes for Fuse searching
+        const allNodes: SitemapNode[] = [];
+        const traverse = (nodes: SitemapNode[]) => {
+            nodes.forEach(node => {
+                allNodes.push(node);
+                if (node.children) traverse(node.children);
+            });
+        };
+        traverse(result.nodes);
+
+        const fuse = new Fuse(allNodes, {
+            keys: ['url'],
+            threshold: 0.4, // Adjust for fuzziness
+            distance: 100,
+        });
+
+        const searchResults = fuse.search(searchQuery);
+        const matchedUrls = new Set(searchResults.map(r => r.item.url));
 
         // Recursive filter for tree
         const filterTree = (nodes: SitemapNode[]): SitemapNode[] => {
             return nodes.reduce<SitemapNode[]>((acc, node) => {
                 const children = node.children ? filterTree(node.children) : [];
-                if (matches(node) || children.length > 0) {
+                // Keep node if it matches OR if it has matching children
+                if (matchedUrls.has(node.url) || children.length > 0) {
                     acc.push({ ...node, children });
                 }
                 return acc;
@@ -176,7 +195,10 @@ export default function SiteExplorer({ params }: { params: Promise<{ url: string
                         </div>
 
                         {/* Toolbar & Content Container */}
-                        <div className="flex-1 flex flex-col min-h-[500px] bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                        <div className={clsx(
+                            "flex-1 flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300",
+                            isFullScreen ? "fixed inset-0 z-[100] rounded-none border-0" : "min-h-[500px]"
+                        )}>
                             {/* Toolbar */}
                             <div className="flex-none p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex flex-col sm:flex-row gap-4 justify-between items-center">
                                 <div className="flex items-center gap-4 w-full sm:w-auto">
@@ -225,6 +247,21 @@ export default function SiteExplorer({ params }: { params: Promise<{ url: string
                                             <Grid size={18} />
                                         </button>
                                     </div>
+
+                                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
+
+                                    <button
+                                        onClick={() => setIsFullScreen(!isFullScreen)}
+                                        className={clsx(
+                                            "p-2 rounded-lg transition-all",
+                                            isFullScreen
+                                                ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                                                : "bg-gray-100 dark:bg-gray-700 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                        )}
+                                        title={isFullScreen ? "Exit Full Screen" : "Full Screen"}
+                                    >
+                                        {isFullScreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+                                    </button>
                                 </div>
                             </div>
 
