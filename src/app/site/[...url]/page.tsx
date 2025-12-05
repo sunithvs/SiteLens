@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, use } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { SitemapTree } from '@/components/SitemapTree';
 import { SitemapTable } from '@/components/SitemapTable';
 import { SitemapGrid } from '@/components/SitemapGrid';
@@ -30,61 +31,56 @@ export default function SiteExplorer({ params }: { params: Promise<{ url: string
     // Fix protocol if it got messed up (e.g. https:/example.com)
     const targetUrl = rawUrl.replace(/^(https?):\/([^\/])/, '$1://$2');
 
-    const [loading, setLoading] = useState(true);
-    const [result, setResult] = useState<ScanResult | null>(null);
-    const [error, setError] = useState<string | null>(null);
     const [selectedNode, setSelectedNode] = useState<SitemapNode | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('tree');
     const [searchQuery, setSearchQuery] = useState('');
 
+
+
     const { addToHistory } = useHistory();
+    const { data: result, isLoading: loading, error: queryError } = useQuery({
+        queryKey: ['scan', targetUrl],
+        queryFn: async () => {
+            const res = await fetch('/api/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: targetUrl }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to scan');
+            }
+
+            return data.result as ScanResult;
+        },
+        enabled: !!targetUrl,
+        staleTime: 1000 * 60 * 10, // 10 minutes
+    });
+
+    const error = queryError ? (queryError as Error).message : null;
 
     useEffect(() => {
-        const scan = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const res = await fetch('/api/scan', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: targetUrl }),
-                });
+        if (result) {
+            // Add to history on success
+            addToHistory(targetUrl);
 
-                const data = await res.json();
-
-                if (!res.ok) {
-                    throw new Error(data.error || 'Failed to scan');
-                }
-
-                setResult(data.result);
-                // Add to history on success
-                addToHistory(targetUrl);
-
-                // Try to fetch metadata in background to update title
-                fetch('/api/metadata', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: targetUrl }),
+            // Try to fetch metadata in background to update title
+            fetch('/api/metadata', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: targetUrl }),
+            })
+                .then(res => res.json())
+                .then(meta => {
+                    if (meta.title) {
+                        addToHistory(targetUrl, meta.title);
+                    }
                 })
-                    .then(res => res.json())
-                    .then(meta => {
-                        if (meta.title) {
-                            addToHistory(targetUrl, meta.title);
-                        }
-                    })
-                    .catch(err => console.error('Failed to fetch metadata for history', err));
-
-            } catch (err: any) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (targetUrl) {
-            scan();
+                .catch(err => console.error('Failed to fetch metadata for history', err));
         }
-    }, [targetUrl]);
+    }, [result, targetUrl, addToHistory]);
 
     const filteredNodes = useMemo(() => {
         if (!result) return [];
