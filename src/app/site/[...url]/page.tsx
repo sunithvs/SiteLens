@@ -8,6 +8,7 @@ import { DetailPanel } from '@/components/DetailPanel';
 import { StatsDashboard } from '@/components/StatsDashboard';
 import { SitemapNode, ScanResult } from '@/lib/sitemap-scanner';
 import { Search, Loader2, AlertCircle, LayoutList, Grid, ListTree, ArrowLeft, Home } from 'lucide-react';
+import { useHistory } from '@/hooks/useHistory';
 import { clsx } from 'clsx';
 import { Logo } from '@/components/Logo';
 import Link from 'next/link';
@@ -36,6 +37,8 @@ export default function SiteExplorer({ params }: { params: Promise<{ url: string
     const [viewMode, setViewMode] = useState<ViewMode>('tree');
     const [searchQuery, setSearchQuery] = useState('');
 
+    const { addToHistory } = useHistory();
+
     useEffect(() => {
         const scan = async () => {
             setLoading(true);
@@ -54,6 +57,23 @@ export default function SiteExplorer({ params }: { params: Promise<{ url: string
                 }
 
                 setResult(data.result);
+                // Add to history on success
+                addToHistory(targetUrl);
+
+                // Try to fetch metadata in background to update title
+                fetch('/api/metadata', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: targetUrl }),
+                })
+                    .then(res => res.json())
+                    .then(meta => {
+                        if (meta.title) {
+                            addToHistory(targetUrl, meta.title);
+                        }
+                    })
+                    .catch(err => console.error('Failed to fetch metadata for history', err));
+
             } catch (err: any) {
                 setError(err.message);
             } finally {
