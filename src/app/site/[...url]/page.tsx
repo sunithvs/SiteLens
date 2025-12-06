@@ -9,7 +9,7 @@ import { SitemapGrid } from '@/components/SitemapGrid';
 import { DetailPanel } from '@/components/DetailPanel';
 import { StatsDashboard } from '@/components/StatsDashboard';
 import { SitemapNode, ScanResult } from '@/lib/sitemap-scanner';
-import { Search, Loader2, AlertCircle, LayoutList, Grid, ListTree, ArrowLeft, Home, Maximize2, Minimize2 } from 'lucide-react';
+import { Search, Loader2, AlertCircle, LayoutList, Grid, ListTree, ArrowLeft, Home, Maximize2, Minimize2, AlertTriangle } from 'lucide-react';
 import { useHistory } from '@/hooks/useHistory';
 import { clsx } from 'clsx';
 import { Logo } from '@/components/Logo';
@@ -163,6 +163,17 @@ export default function SiteExplorer({ params }: { params: Promise<{ url: string
                             {targetUrl}
                         </p>
                     </div>
+                    <div className="flex items-center gap-4">
+                        <a
+                            href="https://buymeacoffee.com/sunithvs"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-600 dark:text-yellow-400 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                        >
+                            <span className="text-lg">☕</span>
+                            <span className="hidden sm:inline">Buy me a coffee</span>
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -193,6 +204,23 @@ export default function SiteExplorer({ params }: { params: Promise<{ url: string
                         <div className="flex-none">
                             <StatsDashboard result={result} />
                         </div>
+
+                        {/* Error Report */}
+                        {result.errors.length > 0 && (
+                            <div className="flex-none bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+                                <h3 className="flex items-center gap-2 text-red-800 dark:text-red-200 font-medium mb-2">
+                                    <AlertTriangle size={20} />
+                                    Scan Errors ({result.errors.length})
+                                </h3>
+                                <ul className="space-y-1">
+                                    {result.errors.map((err, i) => (
+                                        <li key={i} className="text-sm text-red-600 dark:text-red-400 font-mono break-all">
+                                            {err}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
 
                         {/* Toolbar & Content Container */}
                         <div className={clsx(

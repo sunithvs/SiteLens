@@ -25,7 +25,7 @@ export function Footer() {
 
                     <div>
                         <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Connect</h4>
-                        <div className="flex gap-4">
+                        <div className="flex flex-col gap-4">
                             <a
                                 href="http://devb.io/sunithvs?utm_source=sitelens"
                                 target="_blank"
@@ -38,6 +38,15 @@ export function Footer() {
                                     alt="devb.io"
                                     className="h-8 w-auto object-contain transition-opacity invert dark:invert-0"
                                 />
+                            </a>
+                            <a
+                                href="https://buymeacoffee.com/sunithvs"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-gray-400 hover:opacity-80 transition-opacity flex items-center gap-2"
+                                title="Buy Me a Coffee"
+                            >
+                                <span className="text-sm font-medium">☕ Buy me a coffee</span>
                             </a>
                         </div>
                     </div>

@@ -158,8 +158,78 @@ export class SitemapScanner {
                     children, // These are terminal URLs
                     lastmod: parsed.urlset.lastmod
                 };
-            } else {
-                this.errors.push(`Unknown XML format at ${url}`);
+            }
+            // Check for non-standard JCR/Adobe export format
+            else if (parsed.sitemap) {
+                // Try to extract URLs from this custom format
+                const children: SitemapNode[] = [];
+                const origin = new URL(url).origin;
+
+                // Recursive helper to find "sectionLink" in the JSON structure
+                const traverseJSON = (obj: any) => {
+                    if (!obj || typeof obj !== 'object') return;
+
+                    // Check for interesting attributes
+                    // "ordinarySections": "{\"sectionLink\":\"/content/mm/mo/movies/tv\"}"
+                    // fast-xml-parser prefixes attributes with "@_"
+                    const sectionsJson = obj['@_ordinarySections'] || obj.ordinarySections;
+
+                    if (sectionsJson) {
+                        try {
+                            const sections = JSON.parse(sectionsJson);
+                            if (sections.sectionLink) {
+                                let link = sections.sectionLink as string;
+                                // Basic cleanup
+                                if (link.startsWith('/content/mm/mo')) {
+                                    link = link.replace('/content/mm/mo', '');
+                                }
+                                if (!link.endsWith('.html') && !link.endsWith('/')) {
+                                    link += '.html';
+                                }
+
+                                const fullUrl = new URL(link, origin).toString();
+
+                                if (this.totalUrls < MAX_URLS) {
+                                    this.totalUrls++;
+                                    children.push({
+                                        url: fullUrl,
+                                        type: 'url',
+                                        depth: depth + 1
+                                    });
+                                }
+                            }
+                        } catch (e) {
+                            // ignore parsing errors
+                        }
+                    }
+
+                    // Traverse children
+                    for (const key in obj) {
+                        traverseJSON(obj[key]);
+                    }
+                };
+
+                traverseJSON(parsed.sitemap);
+
+                if (children.length > 0) {
+                    return {
+                        url,
+                        type: 'sitemap',
+                        depth,
+                        children,
+                        lastmod: parsed.sitemap?.['jcr:lastModified'] || new Date().toISOString()
+                    };
+                }
+
+                // If no URLs found, then return the error
+                this.errors.push(`Invalid Sitemap at ${url}: Found non-standard root element '<sitemap>' and could not extract any URLs.`);
+                return null;
+            }
+            else {
+                // Try to be more helpful with the error
+                const rootKeys = Object.keys(parsed);
+                const firstKey = rootKeys.length > 0 ? rootKeys[0] : 'unknown';
+                this.errors.push(`Invalid Sitemap format at ${url}: Expected <urlset> or <sitemapindex>, found <${firstKey}>.`);
                 return null;
             }
 
