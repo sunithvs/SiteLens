@@ -1,0 +1,120 @@
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0* Host flightpoints.com:443 was resolved.
+* IPv6: (none)
+* IPv4: 216.150.1.1
+*   Trying 216.150.1.1:443...
+* Connected to flightpoints.com (216.150.1.1) port 443
+* ALPN: curl offers h2,http/1.1
+* (304) (OUT), TLS handshake, Client hello (1):
+} [321 bytes data]
+*  CAfile: /etc/ssl/cert.pem
+*  CApath: none
+* (304) (IN), TLS handshake, Server hello (2):
+{ [122 bytes data]
+* (304) (IN), TLS handshake, Unknown (8):
+{ [15 bytes data]
+* (304) (IN), TLS handshake, Certificate (11):
+{ [2591 bytes data]
+* (304) (IN), TLS handshake, CERT verify (15):
+{ [264 bytes data]
+* (304) (IN), TLS handshake, Finished (20):
+{ [36 bytes data]
+* (304) (OUT), TLS handshake, Finished (20):
+} [36 bytes data]
+* SSL connection using TLSv1.3 / AEAD-CHACHA20-POLY1305-SHA256 / [blank] / UNDEF
+* ALPN: server accepted h2
+* Server certificate:
+*  subject: CN=flightpoints.com
+*  start date: Nov 11 17:33:44 2025 GMT
+*  expire date: Feb  9 17:33:43 2026 GMT
+*  subjectAltName: host "flightpoints.com" matched cert's "flightpoints.com"
+*  issuer: C=US; O=Let's Encrypt; CN=R12
+*  SSL certificate verify ok.
+* using HTTP/2
+* [HTTP/2] [1] OPENED stream for https://flightpoints.com/sitemap.xml
+* [HTTP/2] [1] [:method: GET]
+* [HTTP/2] [1] [:scheme: https]
+* [HTTP/2] [1] [:authority: flightpoints.com]
+* [HTTP/2] [1] [:path: /sitemap.xml]
+* [HTTP/2] [1] [user-agent: curl/8.7.1]
+* [HTTP/2] [1] [accept: */*]
+> GET /sitemap.xml HTTP/2
+> Host: flightpoints.com
+> User-Agent: curl/8.7.1
+> Accept: */*
+> 
+* Request completely sent off
+< HTTP/2 307 
+< cache-control: public, max-age=0, must-revalidate
+< content-type: text/plain
+< date: Sat, 06 Dec 2025 18:28:24 GMT
+< location: https://www.flightpoints.com/sitemap.xml
+< server: Vercel
+< strict-transport-security: max-age=63072000
+< x-vercel-id: bom1::82kvn-1765045704112-67dd2e0fa5b3
+< 
+* Ignoring the response-body
+100    15    0    15    0     0     60      0 --:--:-- --:--:-- --:--:--    60
+* Connection #0 to host flightpoints.com left intact
+* Issue another request to this URL: 'https://www.flightpoints.com/sitemap.xml'
+* Host www.flightpoints.com:443 was resolved.
+* IPv6: (none)
+* IPv4: 216.150.16.193, 216.150.1.193
+*   Trying 216.150.16.193:443...
+* Connected to www.flightpoints.com (216.150.16.193) port 443
+* ALPN: curl offers h2,http/1.1
+* (304) (OUT), TLS handshake, Client hello (1):
+} [325 bytes data]
+* (304) (IN), TLS handshake, Server hello (2):
+{ [122 bytes data]
+* (304) (IN), TLS handshake, Unknown (8):
+{ [15 bytes data]
+* (304) (IN), TLS handshake, Certificate (11):
+{ [2596 bytes data]
+* (304) (IN), TLS handshake, CERT verify (15):
+{ [264 bytes data]
+* (304) (IN), TLS handshake, Finished (20):
+{ [36 bytes data]
+* (304) (OUT), TLS handshake, Finished (20):
+} [36 bytes data]
+* SSL connection using TLSv1.3 / AEAD-CHACHA20-POLY1305-SHA256 / [blank] / UNDEF
+* ALPN: server accepted h2
+* Server certificate:
+*  subject: CN=www.flightpoints.com
+*  start date: Nov 11 17:33:43 2025 GMT
+*  expire date: Feb  9 17:33:42 2026 GMT
+*  subjectAltName: host "www.flightpoints.com" matched cert's "www.flightpoints.com"
+*  issuer: C=US; O=Let's Encrypt; CN=R12
+*  SSL certificate verify ok.
+* using HTTP/2
+* [HTTP/2] [1] OPENED stream for https://www.flightpoints.com/sitemap.xml
+* [HTTP/2] [1] [:method: GET]
+* [HTTP/2] [1] [:scheme: https]
+* [HTTP/2] [1] [:authority: www.flightpoints.com]
+* [HTTP/2] [1] [:path: /sitemap.xml]
+* [HTTP/2] [1] [user-agent: curl/8.7.1]
+* [HTTP/2] [1] [accept: */*]
+> GET /sitemap.xml HTTP/2
+> Host: www.flightpoints.com
+> User-Agent: curl/8.7.1
+> Accept: */*
+> 
+* Request completely sent off
+< HTTP/2 200 
+< age: 0
+< cache-control: private, no-cache, no-store, max-age=0, must-revalidate
+< content-type: text/html; charset=utf-8
+< date: Sat, 06 Dec 2025 18:28:24 GMT
+< link: </_next/static/media/b261c59b2d76913d-s.p.woff2?dpl=dpl_Dk6vFQnRU5Y33FUu4Duo6ZNj36Lj>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/e4af272ccee01ff0-s.p.woff2?dpl=dpl_Dk6vFQnRU5Y33FUu4Duo6ZNj36Lj>; rel=preload; as="font"; crossorigin=""; type="font/woff2"
+< server: Vercel
+< strict-transport-security: max-age=63072000
+< vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch
+< x-matched-path: /[programName]
+< x-powered-by: Next.js
+< x-vercel-cache: MISS
+< x-vercel-id: bom1::iad1::zc44b-1765045704297-26b099761613
+< 
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0{ [5921 bytes data]
+100 32567    0 32567    0     0  47183      0 --:--:-- --:--:-- --:--:-- 15.5M
+* Connection #1 to host www.flightpoints.com left intact

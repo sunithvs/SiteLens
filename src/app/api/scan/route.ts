@@ -3,11 +3,27 @@ import { SitemapScanner } from '@/lib/sitemap-scanner';
 
 export async function POST(req: NextRequest) {
     try {
-        const { url } = await req.json();
+        const { url, content } = await req.json();
+
+        if (!url && !content) {
+            return NextResponse.json({ error: 'URL or Content is required' }, { status: 400 });
+        }
+
+        // 3. Scan Content directly if provided
+        if (content) {
+            console.log(`Scanning manual content for ${url || 'manual-input'}`);
+            const scanner = new SitemapScanner();
+            const result = await scanner.scanContent(content, url || 'http://manual-input');
+            return NextResponse.json({
+                message: 'Scan complete',
+                result
+            });
+        }
 
         if (!url) {
-            return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+            return NextResponse.json({ error: 'URL is required if content is not provided' }, { status: 400 });
         }
+
 
         // Basic validation
         let targetUrl = url.trim();
