@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
                         // Simple heuristic: if it doesn't end in .xml, check robots.txt
                         if (!targetUrl.toLowerCase().endsWith('.xml') && !targetUrl.includes('sitemap')) {
                             sendEvent({ type: 'info', message: 'Checking robots.txt...' });
+                            // Check robots.txt first
                             try {
                                 const urlObj = new URL(targetUrl);
                                 const robotsUrl = new URL('/robots.txt', urlObj.origin).toString();
@@ -71,7 +72,61 @@ export async function POST(req: NextRequest) {
                                 }
                             } catch (e) {
                                 console.log('Robots check failed', e);
-                                sendEvent({ type: 'info', message: 'Robots.txt check failed, scanning root...' });
+                                sendEvent({ type: 'info', message: 'Robots.txt check failed' });
+                            }
+
+                            // If no sitemaps found yet, try standard paths
+                            if (targets.length === 1 && targets[0] === targetUrl) {
+                                sendEvent({ type: 'info', message: 'Checking standard sitemap locations...' });
+                                const commonPaths = [
+                                    '/sitemap.xml',
+                                    '/sitemap_index.xml',
+                                    '/sitemap/sitemap.xml',
+                                    '/wp-sitemap.xml'
+                                ];
+
+                                const foundSitemaps: string[] = [];
+                                const urlObj = new URL(targetUrl);
+
+                                // We need to check these one by one or in parallel? Parallel is faster.
+                                await Promise.all(commonPaths.map(async (path) => {
+                                    try {
+                                        const testUrl = new URL(path, urlObj.origin).toString();
+                                        const res = await fetch(testUrl, {
+                                            method: 'HEAD',
+                                            headers: { 'User-Agent': 'XML-Nexus-Bot/1.0' },
+                                            signal: AbortSignal.timeout(3000)
+                                        });
+                                        // Check if it exists and is XMLish (or just 200 OK)
+                                        if (res.ok) {
+                                            const type = res.headers.get('content-type') || '';
+                                            if (type.includes('xml') || type.includes('text/plain') || testUrl.endsWith('.xml')) {
+                                                foundSitemaps.push(testUrl);
+                                            }
+                                        }
+                                    } catch (e) {
+                                        // ignore errors
+                                    }
+                                }));
+
+                                if (foundSitemaps.length > 0) {
+                                    targets = foundSitemaps;
+                                    sendEvent({ type: 'info', message: `Found ${targets.length} sitemaps via heuristics` });
+                                } else {
+                                    // If we still found nothing, and the input was just a domain,
+                                    // we might be about to scan the homepage HTML.
+                                    // We should warn about this or fail?
+
+                                    // If the user explicitly typed a full URL like `https://example.com/foo`, maybe they think it's a sitemap?
+                                    // But usually users type `example.com`.
+
+                                    // Let's TRY to scan the targetUrl, but if it fails validation in scanner, it will error out.
+                                    // The user's error was "Invalid Sitemap format... found <html>".
+                                    // This is correct behavior if no sitemap exists.
+                                    // But we can give a BETTER error message here in the API?
+
+                                    sendEvent({ type: 'info', message: 'No sitemaps found. Attempting to scan input URL directly...' });
+                                }
                             }
                         }
 

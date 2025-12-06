@@ -15,9 +15,10 @@ type ViewMode = 'tree' | 'table' | 'grid';
 
 interface SitemapVisualizationProps {
     result: ScanResult;
+    loading?: boolean;
 }
 
-export function SitemapVisualization({ result }: SitemapVisualizationProps) {
+export function SitemapVisualization({ result, loading }: SitemapVisualizationProps) {
     const [selectedNode, setSelectedNode] = useState<SitemapNode | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('tree');
     const [searchQuery, setSearchQuery] = useState('');
@@ -93,7 +94,7 @@ export function SitemapVisualization({ result }: SitemapVisualizationProps) {
 
                 {/* Stats Dashboard - Stacks on mobile */}
                 <div className="flex-none">
-                    <StatsDashboard result={result} />
+                    <StatsDashboard result={result} loading={loading} />
                 </div>
 
                 {/* Error Report - Collapsible if we have results */}

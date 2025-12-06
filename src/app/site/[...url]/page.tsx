@@ -92,7 +92,7 @@ export default function SitePage() {
                     </div>
                 )}
 
-                {result && <SitemapVisualization result={result} />}
+                {result && <SitemapVisualization result={result} loading={loading} />}
             </main>
         </div>
     );
