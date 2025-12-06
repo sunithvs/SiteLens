@@ -26,9 +26,9 @@ const parser = new XMLParser({
     attributeNamePrefix: "@_"
 });
 
-const MAX_DEPTH = 3;
-const MAX_URLS = 10000;
-const CONCURRENT_LIMIT = 5;
+const MAX_DEPTH = 50;
+const MAX_URLS = 10000000;
+const CONCURRENT_LIMIT = 20;
 
 export class SitemapScanner {
     private visited = new Set<string>();
