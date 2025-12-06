@@ -1,121 +1,99 @@
 'use client';
 
-import { useEffect, use } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { ScanResult } from '@/lib/sitemap-scanner';
-import { Loader2, AlertCircle } from 'lucide-react';
-import { useHistory } from '@/hooks/useHistory';
-import { Logo } from '@/components/Logo';
-import Link from 'next/link';
+import { useEffect, useRef } from 'react';
+import { useParams } from 'next/navigation';
 import { SitemapVisualization } from '@/components/SitemapVisualization';
+import { Loader2, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
+import { useSitemapStream } from '@/hooks/useSitemapStream';
 
-type ViewMode = 'tree' | 'table' | 'grid';
+export default function SitePage() {
+    const params = useParams();
+    // Reconstruct the URL from the catch-all route
+    const rawUrl = (Array.isArray(params.url) ? params.url.join('/') : params.url) || '';
+    // Decode it (it was encoded in the navigation)
+    const url = decodeURIComponent(rawUrl);
 
-export default function SiteExplorer({ params }: { params: Promise<{ url: string[] }> }) {
-    // Unwrap params using React.use()
-    const { url } = use(params);
-
-    const rawUrl = url.map(decodeURIComponent).join('/');
-    // Fix protocol if it got messed up (e.g. https:/example.com)
-    const targetUrl = rawUrl.replace(/^(https?):\/([^\/])/, '$1://$2');
-
-    const { addToHistory } = useHistory();
-    const { data: result, isLoading: loading, error: queryError } = useQuery({
-        queryKey: ['scan', targetUrl],
-        queryFn: async () => {
-            const res = await fetch('/api/scan', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: targetUrl }),
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.error || 'Failed to scan');
-            }
-
-            return data.result as ScanResult;
-        },
-        enabled: !!targetUrl,
-        staleTime: 1000 * 60 * 10, // 10 minutes
-    });
-
-    const error = queryError ? (queryError as Error).message : null;
+    const { startScan, result, loading, error, logs } = useSitemapStream();
+    const hasStartedRef = useRef(false);
 
     useEffect(() => {
-        if (result) {
-            // Add to history on success
-            addToHistory(targetUrl);
-
-            // Try to fetch metadata in background to update title
-            fetch('/api/metadata', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: targetUrl }),
-            })
-                .then(res => res.json())
-                .then(meta => {
-                    if (meta.title) {
-                        addToHistory(targetUrl, meta.title);
-                    }
-                })
-                .catch(err => console.error('Failed to fetch metadata for history', err));
+        if (url && !hasStartedRef.current) {
+            hasStartedRef.current = true;
+            // Fix protocol if missing
+            let targetUrl = url;
+            if (!targetUrl.startsWith('http')) {
+                // If it looks like a domain, prepend https
+                targetUrl = `https://${targetUrl}`;
+            }
+            startScan(targetUrl);
         }
-    }, [result, targetUrl, addToHistory]);
+    }, [url, startScan]);
 
-    return (
-        <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
-            {/* Sticky Header */}
-            <div className="flex-none bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 z-50">
-                <div className="max-w-[1920px] mx-auto px-4 h-16 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 min-w-0">
-                        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
-                            <Logo className="w-8 h-8" />
-                            <span className="font-bold text-xl hidden sm:block text-gray-900 dark:text-white">SiteLens</span>
-                        </Link>
-                        <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block" />
-                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-[200px] sm:max-w-md" title={targetUrl}>
-                            {targetUrl}
-                        </p>
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50 dark:bg-black">
+                <div className="bg-white dark:bg-gray-900 border border-red-200 dark:border-red-800 rounded-2xl p-8 max-w-md w-full shadow-xl text-center">
+                    <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600 dark:text-red-400">
+                        <AlertCircle size={24} />
                     </div>
-                    <div className="flex items-center gap-4">
-                        <a
-                            href="https://buymeacoffee.com/sunithvs"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-600 dark:text-yellow-400 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                        >
-                            <span className="text-lg">☕</span>
-                            <span className="hidden sm:inline">Buy me a coffee</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            {loading && (
-                <div className="flex-1 flex flex-col items-center justify-center text-gray-500 min-h-[400px]">
-                    <Loader2 className="animate-spin mb-4" size={48} />
-                    <p>Scanning sitemap...</p>
-                </div>
-            )}
-
-            {error && (
-                <div className="flex-1 flex flex-col items-center justify-center text-red-500 min-h-[400px]">
-                    <AlertCircle className="mb-4" size={48} />
-                    <p className="text-lg font-medium">Scan Failed</p>
-                    <p className="text-sm opacity-80">{error}</p>
-                    <Link href="/" className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Scan Failed</h1>
+                    <p className="text-gray-600 dark:text-gray-300 mb-6 font-mono text-sm break-all">{error}</p>
+                    <Link
+                        href="/"
+                        className="inline-flex items-center justify-center px-6 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-opacity font-medium"
+                    >
                         Try Another URL
                     </Link>
                 </div>
-            )}
+            </div>
+        );
+    }
 
-            {/* Results */}
-            {!loading && !error && result && (
-                <SitemapVisualization result={result} />
-            )}
+    // While loading initial data (before any result), show loader
+    // Once we have a result (even partial), show the visualization
+    if (!result && loading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50 dark:bg-black">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+                    <div className="text-center">
+                        <h2 className="text-lg font-medium text-gray-900 dark:text-white">Connecting to Scanner...</h2>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">Target: {url}</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="h-screen bg-gray-50 dark:bg-black flex flex-col">
+            <header className="flex-none bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-4 overflow-hidden">
+                    <Link href="/" className="flex-shrink-0 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">
+                        ← Back
+                    </Link>
+                    <div className="flex flex-col min-w-0">
+                        <h1 className="text-lg font-bold text-gray-900 dark:text-white truncate flex items-center gap-2">
+                            {url}
+                            {loading && <span className="text-xs font-normal text-blue-500 bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded-full animate-pulse">Scanning...</span>}
+                        </h1>
+                    </div>
+                </div>
+            </header>
+
+            <main className="flex-1 min-h-0 relative">
+                {/* Streaming Logs Overlay (Optional, tiny) */}
+                {loading && logs.length > 0 && (
+                    <div className="absolute top-2 right-2 z-50 pointer-events-none max-w-sm w-full">
+                        <div className="bg-black/70 backdrop-blur text-white text-xs p-2 rounded mb-1 animate-fade-in shadow-lg border border-white/10">
+                            {logs[logs.length - 1]}
+                        </div>
+                    </div>
+                )}
+
+                {result && <SitemapVisualization result={result} />}
+            </main>
         </div>
     );
 }
-

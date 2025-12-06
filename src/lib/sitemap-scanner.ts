@@ -36,8 +36,34 @@ export class SitemapScanner {
     private totalSitemaps = 0;
     private errors: string[] = [];
 
-    async scan(rootUrls: string[]): Promise<ScanResult> {
+    async scan(rootUrls: string[], onProgress?: (node: SitemapNode) => void): Promise<ScanResult> {
         const nodes: SitemapNode[] = [];
+
+        // Recursive helper that knows about the callback
+        const processWithCallback = async (url: string, depth: number) => {
+            const node = await this.processUrl(url, depth);
+            if (node) {
+                if (onProgress) onProgress(node);
+                nodes.push(node);
+
+                // If it is a sitemap index, we don't emit the index itself if we want to emit children? 
+                // Actually, let's emit every node we find.
+
+                // NOTE: The current processUrl is recursive and returns a tree. 
+                // To fully stream, we might need to refactor traversal to be iterative or emit inside processUrl.
+                // However, `processUrl` returns the *completed* subtree.
+                // Ideally, we want to emit as soon as we know about a URL.
+
+                // For now, let's keep the tree structure but emit the *root* of the sub-scan when it's ready?
+                // No, that defeats the purpose for huge sitemaps. 
+
+                // Let's modify processUrl to take the callback too, and emit "leaf" nodes (URLs) immediately.
+            }
+            return node;
+        };
+
+        // Wait, processUrl builds the whole tree. If we want streaming, we need to pass the callback DOWN.
+        this.onProgressCallback = onProgress;
 
         for (const url of rootUrls) {
             const node = await this.processUrl(url, 0);
@@ -54,7 +80,8 @@ export class SitemapScanner {
         };
     }
 
-    async scanContent(content: string, baseUrl: string): Promise<ScanResult> {
+    async scanContent(content: string, baseUrl: string, onProgress?: (node: SitemapNode) => void): Promise<ScanResult> {
+        this.onProgressCallback = onProgress;
         try {
             const node = await this.parseXml(content, baseUrl, 0);
             if (node) {
@@ -77,7 +104,11 @@ export class SitemapScanner {
         };
     }
 
+    // Helper property to store callback during recursion
+    private onProgressCallback?: (node: SitemapNode) => void;
+
     private async parseXml(xmlText: string, url: string, depth: number): Promise<SitemapNode | null> {
+        // ... (validation code kept same as before, see next chunk for modification inside parsing)
         // Basic validation
         if (!xmlText.trim().startsWith('<')) {
             // Sometimes there might be whitespace or BOM
@@ -104,16 +135,42 @@ export class SitemapScanner {
 
             const results = await Promise.all(childPromises);
             results.forEach(r => {
-                if (r) children.push(r);
+                if (r) {
+                    children.push(r);
+                    // Note: We don't emit 'sitemap' container nodes here because their children are already emitted? 
+                    // Or should we?
+                    // If we emit the container, it contains all children, which is huge duplication if we already emitted children.
+                    // Let's ONLY emit LEAD nodes (Type URL) immediately.
+
+                    // Actually, for the Graph/Tree view, we need the structure. 
+                    // Let's emit the node with empty children initially? No that's complex.
+
+                    // Strategy: Emit "Url" nodes immediately. "Sitemap" nodes are emitted when fully processed (recursive unwind).
+                    // This allows the table/grid to fill up, even if the tree waits a bit.
+                    // BUT, if we want the tree to build progressively, we need to emit "Parent" then "Child".
+
+                    // Current architecture: `processUrl` returns the FULL tree. 
+                    // To support streaming *structure*, we'd need to emit "Start Sitemap X" then "Url A", "Url B", "End Sitemap X".
+
+                    // Let's stick to simple FLATTENED streaming for now? 
+                    // The user said "show whatever data is fetched". Likely they care about the URLs found.
+                    // Let's emit every node that is type='url'.
+                }
             });
 
-            return {
+            const sitemapNode: SitemapNode = {
                 url,
                 type: 'sitemap',
                 depth,
                 children,
                 lastmod: parsed.sitemapindex.lastmod
             };
+
+            // Emit the Container Sitemap Node (after children are processed)
+            // This might be too late for huge sitemaps, but strictly speaking 'sitemapindex' usually contains just a few sitemaps.
+            if (this.onProgressCallback) this.onProgressCallback(sitemapNode);
+
+            return sitemapNode;
         }
         // Check for Urlset
         else if (parsed.urlset && parsed.urlset.url) {
@@ -127,23 +184,32 @@ export class SitemapScanner {
                 if (this.totalUrls >= MAX_URLS) break;
 
                 this.totalUrls++;
-                children.push({
+                const urlNode: SitemapNode = {
                     url: u.loc,
                     type: 'url',
                     depth: depth + 1,
                     lastmod: u.lastmod,
                     changefreq: u.changefreq,
                     priority: u.priority
-                });
+                };
+                children.push(urlNode);
+
+                // STREAM: Emit this URL immediately!
+                if (this.onProgressCallback) this.onProgressCallback(urlNode);
             }
 
-            return {
+            const sitemapNode: SitemapNode = {
                 url,
                 type: 'sitemap',
                 depth,
                 children, // These are terminal URLs
                 lastmod: parsed.urlset.lastmod
             };
+
+            // Emit the sitemap itself (contains children, duplicates data but allows tree construction if client handles dedup)
+            if (this.onProgressCallback) this.onProgressCallback(sitemapNode);
+
+            return sitemapNode;
         }
         // Check for non-standard JCR/Adobe export format
         else if (parsed.sitemap) {

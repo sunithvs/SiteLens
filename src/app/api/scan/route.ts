@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SitemapScanner } from '@/lib/sitemap-scanner';
 
+export const runtime = 'nodejs';
+// Increase max duration for streaming
+export const maxDuration = 300;
+
 export async function POST(req: NextRequest) {
     try {
         const { url, content } = await req.json();
@@ -9,119 +13,93 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'URL or Content is required' }, { status: 400 });
         }
 
-        // 3. Scan Content directly if provided
-        if (content) {
-            console.log(`Scanning manual content for ${url || 'manual-input'}`);
-            const scanner = new SitemapScanner();
-            const result = await scanner.scanContent(content, url || 'http://manual-input');
-            return NextResponse.json({
-                message: 'Scan complete',
-                result
-            });
-        }
+        const encoder = new TextEncoder();
 
-        if (!url) {
-            return NextResponse.json({ error: 'URL is required if content is not provided' }, { status: 400 });
-        }
+        // Create a streaming response
+        const stream = new ReadableStream({
+            async start(controller) {
+                const scanner = new SitemapScanner();
 
-
-        // Basic validation
-        let targetUrl = url.trim();
-        if (!targetUrl.startsWith('http')) {
-            targetUrl = `https://${targetUrl}`;
-        }
-
-        let initialSitemaps: string[] = [];
-
-        // 0. Check if the input URL itself looks like a sitemap
-        const lowerUrl = targetUrl.toLowerCase();
-        if (lowerUrl.endsWith('.xml') || lowerUrl.endsWith('.xml.gz') || lowerUrl.includes('sitemap')) {
-            console.log(`Input URL looks like a sitemap: ${targetUrl}`);
-            initialSitemaps.push(targetUrl);
-        }
-
-        // 1. Fetch robots.txt (only if we didn't just get a direct sitemap, OR we want to find MORE)
-        // Actually, usually if user gives a domain, we check robots. If they give a sitemap, we might still want to check robots?
-        // Let's do both to be safe, but prioritize the direct input.
-
-        try {
-            // Construct robots.txt URL safely
-            const urlObj = new URL(targetUrl);
-            const robotsUrl = new URL('/robots.txt', urlObj.origin).toString();
-            console.log(`Fetching robots.txt from: ${robotsUrl}`);
-
-            const robotsRes = await fetch(robotsUrl, {
-                headers: {
-                    'User-Agent': 'XML-Nexus-Bot/1.0',
-                    'Accept': 'text/plain,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-                },
-                signal: AbortSignal.timeout(5000)
-            });
-
-            if (robotsRes.ok) {
-                const robotsTxt = await robotsRes.text();
-                const lines = robotsTxt.split('\n');
-                for (const line of lines) {
-                    if (line.toLowerCase().startsWith('sitemap:')) {
-                        const parts = line.split(/:(.+)/);
-                        if (parts.length > 1) {
-                            initialSitemaps.push(parts[1].trim());
-                        }
+                // Helper to push JSON line
+                const sendEvent = (data: any) => {
+                    try {
+                        controller.enqueue(encoder.encode(JSON.stringify(data) + '\n'));
+                    } catch (e) {
+                        // Controller might be closed if client disconnects
+                        console.error('Error enqueuing event:', e);
                     }
-                }
-            }
-        } catch (e) {
-            console.warn('Failed to fetch robots.txt', e);
-        }
+                };
 
-        // 2. Heuristic fallback
-        if (initialSitemaps.length === 0) {
-            const urlObj = new URL(targetUrl);
-            const commonPaths = [
-                '/sitemap.xml',
-                '/sitemap_index.xml',
-                '/sitemap-main.xml',
-                '/wp-sitemap.xml'
-            ];
+                const onProgress = (node: any) => {
+                    // Send regular progress update
+                    // We strip outgoing children to avoid massive payloads for non-leaf nodes being repeated
+                    const nodePayload = { ...node };
+                    if (nodePayload.children) {
+                        nodePayload.children = undefined;
+                    }
+                    sendEvent({ type: 'node', data: nodePayload });
+                };
 
-            for (const path of commonPaths) {
-                const testUrl = new URL(path, urlObj.origin).toString();
                 try {
-                    const res = await fetch(testUrl, {
-                        method: 'HEAD',
-                        headers: { 'User-Agent': 'XML-Nexus-Bot/1.0' },
-                        signal: AbortSignal.timeout(3000)
-                    });
-                    if (res.ok && (res.headers.get('content-type')?.includes('xml') || testUrl.endsWith('.xml'))) {
-                        initialSitemaps.push(testUrl);
+                    let result;
+                    if (content) {
+                        console.log(`Scanning manual content for ${url || 'manual-input'}`);
+                        result = await scanner.scanContent(content, url || 'http://manual-input', onProgress);
+                    } else {
+                        // Regular URL scan
+                        let targetUrl = url.trim();
+                        if (!targetUrl.startsWith('http')) {
+                            targetUrl = `https://${targetUrl}`;
+                        }
+
+                        let targets = [targetUrl];
+
+                        // Simple heuristic: if it doesn't end in .xml, check robots.txt
+                        if (!targetUrl.toLowerCase().endsWith('.xml') && !targetUrl.includes('sitemap')) {
+                            sendEvent({ type: 'info', message: 'Checking robots.txt...' });
+                            try {
+                                const urlObj = new URL(targetUrl);
+                                const robotsUrl = new URL('/robots.txt', urlObj.origin).toString();
+                                const robotsRes = await fetch(robotsUrl, { signal: AbortSignal.timeout(5000) });
+                                if (robotsRes.ok) {
+                                    const robotsTxt = await robotsRes.text();
+                                    const maps = robotsTxt.match(/Sitemap: (.*)/gi);
+                                    if (maps) {
+                                        targets = maps.map(m => m.replace(/Sitemap: /i, '').trim());
+                                        sendEvent({ type: 'info', message: `Found ${targets.length} sitemaps in robots.txt` });
+                                    }
+                                }
+                            } catch (e) {
+                                console.log('Robots check failed', e);
+                                sendEvent({ type: 'info', message: 'Robots.txt check failed, scanning root...' });
+                            }
+                        }
+
+                        sendEvent({ type: 'info', message: `Scanning ${targets.length} targets...` });
+                        result = await scanner.scan(targets, onProgress);
                     }
-                } catch (e) {
-                    // ignore
+
+                    // Send final complete event with full stats/structure
+                    sendEvent({ type: 'complete', result });
+
+                } catch (err: any) {
+                    console.error('Scan error:', err);
+                    sendEvent({ type: 'error', error: err.message });
+                } finally {
+                    controller.close();
                 }
             }
-        }
+        });
 
-        // Deduplicate
-        initialSitemaps = Array.from(new Set(initialSitemaps));
-
-        if (initialSitemaps.length === 0) {
-            return NextResponse.json({
-                error: 'No sitemaps found via robots.txt or heuristics.',
-                scanned: []
-            });
-        }
-
-        // 3. Recursive Scan
-        const scanner = new SitemapScanner();
-        const result = await scanner.scan(initialSitemaps);
-
-        return NextResponse.json({
-            message: 'Scan complete',
-            result
+        return new NextResponse(stream, {
+            headers: {
+                'Content-Type': 'application/x-ndjson',
+                'Transfer-Encoding': 'chunked'
+            }
         });
 
     } catch (error: any) {
-        console.error('Scan error:', error);
+        console.error('Route error:', error);
         return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
     }
 }
