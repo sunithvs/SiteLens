@@ -25,13 +25,25 @@ export function Hero() {
             try {
                 // Basic validation
                 let targetUrl = url.trim();
-                // Check if it's likely to be blocked or if the user should use manual input
-                // For now, just try to route. 
-                // We could check if it is flightpoints.com here, but let's stick to the generic flow.
+
+                // Regex to check for valid domain format at minimum
+                const domainRegex = /^(https?:\/\/)?([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(:\d{1,5})?(\/.*)?$/;
+                if (!domainRegex.test(targetUrl) && !targetUrl.includes('localhost')) {
+                    throw new Error('Please enter a valid website URL (e.g., example.com)');
+                }
 
                 if (!targetUrl.startsWith('http')) {
                     targetUrl = `https://${targetUrl}`;
                 }
+
+                // URL constructor validation as a second pass
+                try {
+                    new URL(targetUrl);
+                } catch (e) {
+                    throw new Error('Invalid URL format');
+                }
+
+                // Encode the URL to handle special characters safely
                 const encodedUrl = encodeURIComponent(targetUrl);
                 router.push(`/site/${encodedUrl}`);
             } catch (err: any) {

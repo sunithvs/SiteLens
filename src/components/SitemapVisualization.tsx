@@ -96,20 +96,24 @@ export function SitemapVisualization({ result }: SitemapVisualizationProps) {
                     <StatsDashboard result={result} />
                 </div>
 
-                {/* Error Report */}
+                {/* Error Report - Collapsible if we have results */}
                 {result.errors.length > 0 && (
-                    <div className="flex-none bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
-                        <h3 className="flex items-center gap-2 text-red-800 dark:text-red-200 font-medium mb-2">
-                            <AlertTriangle size={20} />
-                            Scan Errors ({result.errors.length})
-                        </h3>
-                        <ul className="space-y-1">
-                            {result.errors.map((err, i) => (
-                                <li key={i} className="text-sm text-red-600 dark:text-red-400 font-mono break-all">
-                                    {err}
-                                </li>
-                            ))}
-                        </ul>
+                    <div className="flex-none">
+                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+                            <h3 className="flex items-center gap-2 text-red-800 dark:text-red-200 font-medium mb-2 text-sm">
+                                <AlertTriangle size={16} />
+                                {result.nodes.length > 0
+                                    ? `Partial Success: ${result.errors.length} sitemaps failed to load`
+                                    : `Scan Failed: ${result.errors.length} errors found`}
+                            </h3>
+                            <ul className="space-y-1 max-h-32 overflow-y-auto">
+                                {result.errors.map((err, i) => (
+                                    <li key={i} className="text-xs text-red-600 dark:text-red-400 font-mono break-all">
+                                        {err}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
                 )}
 
