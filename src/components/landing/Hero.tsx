@@ -44,7 +44,12 @@ export function Hero() {
                 }
 
                 // Encode the URL to handle special characters safely
-                const encodedUrl = encodeURIComponent(targetUrl);
+                // Clean URL for navigation (remove protocol and trailing slash)
+                let cleanUrl = targetUrl.replace(/^https?:\/\//, '');
+                if (cleanUrl.endsWith('/')) {
+                    cleanUrl = cleanUrl.slice(0, -1);
+                }
+                const encodedUrl = encodeURIComponent(cleanUrl);
                 router.push(`/site/${encodedUrl}`);
             } catch (err: any) {
                 setError(err.message);

@@ -33,7 +33,7 @@ export function RecentHistory() {
                     {recent.map((item) => (
                         <Link
                             key={item.url}
-                            href={`/site/${encodeURIComponent(item.url)}`}
+                            href={`/site/${encodeURIComponent(item.url.replace(/^https?:\/\//, '').replace(/\/$/, ''))}`}
                             className="group block p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-blue-500/30 transition-all"
                         >
                             <div className="flex items-start justify-between gap-3">

@@ -17,8 +17,7 @@ export async function saveSiteAction(originalUrl: string, sitemapUrl: string | u
         // Ensure result has pages and status
         const enrichedResult = {
             pages: result.nodes?.length || 0,
-            status: 'ok',
-            ...result
+            status: 'ok'
         };
 
         // Check if site already exists

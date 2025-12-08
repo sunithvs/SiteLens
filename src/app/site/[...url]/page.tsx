@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { SitemapVisualization } from '@/components/SitemapVisualization';
 import { Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -10,6 +10,7 @@ import { saveSiteAction } from '@/actions/sites';
 
 export default function SitePage() {
     const params = useParams();
+    const router = useRouter(); // Add router
     // Reconstruct the URL from the catch-all route
     const rawUrl = (Array.isArray(params.url) ? params.url.join('/') : params.url) || '';
     // Decode it (it was encoded in the navigation)
@@ -18,8 +19,30 @@ export default function SitePage() {
     const { startScan, result, loading, error, logs } = useSitemapStream();
     const hasStartedRef = useRef(false);
 
+    // Redirect if URL has protocol or trailing slash
     useEffect(() => {
-        if (url && !hasStartedRef.current) {
+        if (url) {
+            let cleanUrl = url;
+            let needsRedirect = false;
+
+            if (/^https?:\/\//.test(cleanUrl)) {
+                cleanUrl = cleanUrl.replace(/^https?:\/\//, '');
+                needsRedirect = true;
+            }
+
+            if (cleanUrl.endsWith('/')) {
+                cleanUrl = cleanUrl.slice(0, -1);
+                needsRedirect = true;
+            }
+
+            if (needsRedirect) {
+                router.replace(`/site/${encodeURIComponent(cleanUrl)}`);
+            }
+        }
+    }, [url, router]);
+
+    useEffect(() => {
+        if (url && !hasStartedRef.current && !/^https?:\/\//.test(url)) { // Only scan if we are not redirecting (clean url)
             hasStartedRef.current = true;
             // Fix protocol if missing
             let targetUrl = url;
