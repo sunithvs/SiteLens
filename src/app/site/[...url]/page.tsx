@@ -6,6 +6,7 @@ import { SitemapVisualization } from '@/components/SitemapVisualization';
 import { Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useSitemapStream } from '@/hooks/useSitemapStream';
+import { saveSiteAction } from '@/actions/sites';
 
 export default function SitePage() {
     const params = useParams();
@@ -29,6 +30,15 @@ export default function SitePage() {
             startScan(targetUrl);
         }
     }, [url, startScan]);
+
+    const hasSavedRef = useRef(false);
+
+    useEffect(() => {
+        if (result && !loading && !hasSavedRef.current) {
+            hasSavedRef.current = true;
+            saveSiteAction(url, undefined, result);
+        }
+    }, [result, loading, url]);
 
     if (error) {
         return (
