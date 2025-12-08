@@ -23,12 +23,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     // 2. Map scanned sites to sitemap entries
-    const siteEntries: MetadataRoute.Sitemap = (sites || []).map((site) => ({
-        url: `${baseUrl}/site/${site.site_url}`,
-        lastModified: new Date(site.created_at),
-        changeFrequency: 'daily',
-        priority: 0.7,
-    }));
+    const siteEntries: MetadataRoute.Sitemap = (sites || [])
+        .filter((site) => site.site_url)
+        .map((site) => ({
+            url: `${baseUrl}/site/${encodeURIComponent(site.site_url)}`,
+            lastModified: new Date(site.created_at),
+            changeFrequency: 'daily',
+            priority: 0.7,
+        }));
 
     // 3. Define static routes
     const staticRoutes: MetadataRoute.Sitemap = [

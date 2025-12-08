@@ -12,7 +12,23 @@ export interface SiteResult {
 export async function saveSiteAction(originalUrl: string, sitemapUrl: string | undefined, result: any) {
     try {
         // Clean the URL: remove protocol (http:// or https://)
-        const cleanUrl = originalUrl.replace(/^https?:\/\//, '');
+        let cleanUrl = originalUrl.replace(/^https?:\/\//, '');
+
+        // Decode to handle %2F, %3C etc
+        try {
+            cleanUrl = decodeURIComponent(cleanUrl);
+        } catch (e) {
+            // Ignore decode errors
+        }
+
+        // Remove trailing slash
+        if (cleanUrl.endsWith('/')) {
+            cleanUrl = cleanUrl.slice(0, -1);
+        }
+
+        // Remove potentially dangerous or garbage characters commonly found in bad copy-pastes
+        // < > " '
+        cleanUrl = cleanUrl.replace(/[<>"']/g, '');
 
         // Ensure result has pages and status
         const enrichedResult = {
