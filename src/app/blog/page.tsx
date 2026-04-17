@@ -3,10 +3,20 @@ import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { getAllPosts } from '@/lib/blog';
+import { JsonLd } from '@/components/JsonLd';
+import { breadcrumbSchema } from '@/lib/schema';
 
 export const metadata: Metadata = {
     title: 'Blog',
     description: 'Guides, teardowns, and notes on sitemaps, SEO, and the messy work of running a website.',
+    alternates: { canonical: '/blog' },
+    openGraph: {
+        title: 'SiteLens Blog',
+        description: 'Guides, teardowns, and notes on sitemaps, SEO, and running a website.',
+        type: 'website',
+        url: '/blog',
+        images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+    },
 };
 
 function formatDate(d: string) {
@@ -21,6 +31,12 @@ export default function BlogIndexPage() {
 
     return (
         <main className="min-h-screen bg-[#0a0a0a] text-white">
+            <JsonLd
+                data={breadcrumbSchema([
+                    { name: 'Home', url: '/' },
+                    { name: 'Blog', url: '/blog' },
+                ])}
+            />
             <nav className="container mx-auto px-4 pt-8 flex items-center justify-between">
                 <Link href="/"><Logo size={32} /></Link>
                 <div className="flex items-center gap-2">

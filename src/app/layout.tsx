@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
 import QueryProvider from "@/components/QueryProvider";
+import { JsonLd } from "@/components/JsonLd";
+import { organizationSchema, websiteSchema, softwareApplicationSchema, baseUrl } from "@/lib/schema";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,6 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(baseUrl()),
   title: {
     default: 'SiteLens — Sitemap Explorer & SEO Visualizer',
     template: '%s · SiteLens',
@@ -23,6 +26,22 @@ export const metadata: Metadata = {
   applicationName: 'SiteLens',
   keywords: ['sitemap', 'sitemap explorer', 'SEO audit', 'broken link checker', 'xml validator', 'crawler', 'site structure'],
   authors: [{ name: 'SiteLens' }],
+  creator: 'SiteLens',
+  publisher: 'SiteLens',
+  alternates: {
+    canonical: '/',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-snippet': -1,
+      'max-image-preview': 'large',
+      'max-video-preview': -1,
+    },
+  },
   manifest: '/site.webmanifest',
   icons: {
     icon: [
@@ -66,6 +85,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <JsonLd data={[organizationSchema(), websiteSchema(), softwareApplicationSchema()]} />
         <QueryProvider>
           {children}
         </QueryProvider>

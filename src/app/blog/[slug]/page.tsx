@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { getAllPosts, getPost } from '@/lib/blog';
+import { JsonLd } from '@/components/JsonLd';
+import { articleSchema, breadcrumbSchema } from '@/lib/schema';
 
 interface Props {
     params: Promise<{ slug: string }>;
@@ -20,12 +22,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
         title: post.title,
         description: post.description,
+        alternates: {
+            canonical: `/blog/${post.slug}`,
+        },
         openGraph: {
             title: post.title,
             description: post.description,
             type: 'article',
             publishedTime: post.date,
             tags: post.tags,
+            url: `/blog/${post.slug}`,
             images: [{ url: '/og-image.png', width: 1200, height: 630 }],
         },
         twitter: {
@@ -53,6 +59,22 @@ export default async function BlogPostPage({ params }: Props) {
 
     return (
         <main className="min-h-screen bg-[#0a0a0a] text-white">
+            <JsonLd
+                data={[
+                    articleSchema({
+                        slug: post.slug,
+                        title: post.title,
+                        description: post.description,
+                        date: post.date,
+                        tags: post.tags,
+                    }),
+                    breadcrumbSchema([
+                        { name: 'Home', url: '/' },
+                        { name: 'Blog', url: '/blog' },
+                        { name: post.title, url: `/blog/${post.slug}` },
+                    ]),
+                ]}
+            />
             <nav className="container mx-auto px-4 pt-8 flex items-center justify-between">
                 <Link href="/"><Logo size={32} /></Link>
                 <Link

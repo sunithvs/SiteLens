@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { Plus, Minus } from 'lucide-react';
 import { clsx } from 'clsx';
+import { JsonLd } from '@/components/JsonLd';
+import { faqSchema } from '@/lib/schema';
 
 const FAQS = [
     {
@@ -28,6 +30,7 @@ export function FAQ() {
 
     return (
         <section className="py-20 md:py-28 bg-[#0a0a0a] border-t border-neutral-900">
+            <JsonLd data={faqSchema(FAQS.map(f => ({ question: f.question, answer: f.answer })))} />
             <div className="container mx-auto px-4 max-w-3xl">
                 <div className="mb-12 md:mb-14">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#141414] border border-neutral-800 text-xs font-medium text-neutral-400 mb-5">

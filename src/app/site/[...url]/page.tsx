@@ -22,6 +22,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return {
         title: `${niceDomain} Sitemap Explorer - Visual Analysis`,
         description: `Analyze the sitemap of ${url}. Visualize specific pages, check SEO metadata, and explore site structure with our visual sitemap explorer.`,
+        robots: {
+            index: false,
+            follow: false,
+            googleBot: { index: false, follow: false },
+        },
         openGraph: {
             title: `${niceDomain} Sitemap Explorer - Visual Analysis`,
             description: `Analyze the sitemap of ${url}. Visualize specific pages and check SEO metadata.`,
