@@ -88,6 +88,12 @@ export function Hero() {
 
                     <div className="flex items-center gap-2">
                         <Link
+                            href="/blog"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm text-neutral-400 hover:text-white transition-colors"
+                        >
+                            Blog
+                        </Link>
+                        <Link
                             href="/history"
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#141414] border border-neutral-800 hover:border-neutral-600 text-sm text-neutral-300 hover:text-white transition-colors"
                         >

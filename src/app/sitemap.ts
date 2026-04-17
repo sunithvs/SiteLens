@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { supabase } from '@/lib/supabaseClient';
+import { getAllPosts } from '@/lib/blog';
 
 export const revalidate = 86400; // Cache for 1 day
 
@@ -41,12 +42,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: 1,
         },
         {
+            url: `${baseUrl}/blog`,
+            lastModified: new Date(),
+            changeFrequency: 'weekly',
+            priority: 0.9,
+        },
+        {
             url: `${baseUrl}/history`,
             lastModified: new Date(),
             changeFrequency: 'daily',
-            priority: 0.8,
+            priority: 0.6,
         },
     ];
 
-    return [...staticRoutes, ...siteEntries];
+    // 4. Blog posts
+    const posts = getAllPosts();
+    const blogEntries: MetadataRoute.Sitemap = posts.map((p) => ({
+        url: `${baseUrl}/blog/${p.slug}`,
+        lastModified: p.date ? new Date(p.date) : new Date(),
+        changeFrequency: 'monthly',
+        priority: 0.8,
+    }));
+
+    return [...staticRoutes, ...blogEntries, ...siteEntries];
 }

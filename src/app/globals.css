@@ -85,6 +85,122 @@ body {
 }
 .animate-fade-in { animation: fade-in 0.3s ease-out; }
 
+/* Blog prose */
+.prose-sitelens {
+  color: #d4d4d4;
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+.prose-sitelens h2 {
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 1.75rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+}
+.prose-sitelens h3 {
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 1.3rem;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin-top: 2.25rem;
+  margin-bottom: 0.75rem;
+}
+.prose-sitelens p {
+  margin-top: 1.1rem;
+  margin-bottom: 1.1rem;
+}
+.prose-sitelens ul, .prose-sitelens ol {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding-left: 1.25rem;
+}
+.prose-sitelens ul { list-style: disc; }
+.prose-sitelens ol { list-style: decimal; }
+.prose-sitelens li { margin-top: 0.35rem; margin-bottom: 0.35rem; }
+.prose-sitelens li::marker { color: #d4ff5e; }
+.prose-sitelens a {
+  color: #d4ff5e;
+  text-decoration: underline;
+  text-decoration-color: rgba(212, 255, 94, 0.35);
+  text-underline-offset: 3px;
+}
+.prose-sitelens a:hover { text-decoration-color: #d4ff5e; }
+.prose-sitelens strong { color: #ffffff; font-weight: 700; }
+.prose-sitelens em { color: #d4ff5e; font-style: italic; }
+.prose-sitelens code {
+  background: #141414;
+  color: #d4ff5e;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  border: 1px solid #262626;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.875em;
+}
+.prose-sitelens pre {
+  background: #141414;
+  border: 1px solid #262626;
+  border-radius: 16px;
+  padding: 1.1rem 1.25rem;
+  overflow-x: auto;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.prose-sitelens pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: #e5e5e5;
+  font-size: 0.9em;
+}
+.prose-sitelens blockquote {
+  border-left: 3px solid #d4ff5e;
+  padding-left: 1.25rem;
+  margin: 1.5rem 0;
+  color: #a3a3a3;
+  font-style: italic;
+}
+.prose-sitelens hr {
+  border: 0;
+  border-top: 1px solid #262626;
+  margin: 2.5rem 0;
+}
+.prose-sitelens table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #262626;
+  border-radius: 16px;
+  overflow: hidden;
+  margin: 1.5rem 0;
+  font-size: 0.9rem;
+}
+.prose-sitelens th {
+  background: #141414;
+  color: #a3a3a3;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #262626;
+}
+.prose-sitelens td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #1c1c1c;
+  color: #d4d4d4;
+}
+.prose-sitelens tr:last-child td { border-bottom: 0; }
+.prose-sitelens img {
+  border-radius: 16px;
+  border: 1px solid #262626;
+  margin: 1.5rem 0;
+}
+
 /* Noise texture overlay for dark panels */
 .noise {
   position: relative;
