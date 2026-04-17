@@ -30,40 +30,40 @@ export function SitemapTree({ node, onSelect, selectedNode, level = 0 }: Sitemap
 
     const getIcon = () => {
         if (node.type === 'sitemap') {
-            return isOpen ? <FolderOpen size={16} className="text-blue-500" /> : <Folder size={16} className="text-blue-500" />;
+            return isOpen ? <FolderOpen size={16} className="text-[#d4ff5e]" /> : <Folder size={16} className="text-[#d4ff5e]" />;
         }
 
         const ext = node.url.split('.').pop()?.toLowerCase();
-        if (ext === 'xml') return <FileCode size={16} className="text-orange-500" />;
-        if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '')) return <ImageIcon size={16} className="text-purple-500" />;
-        if (['pdf'].includes(ext || '')) return <FileText size={16} className="text-red-500" />;
+        if (ext === 'xml') return <FileCode size={16} className="text-[#ff9330]" />;
+        if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '')) return <ImageIcon size={16} className="text-purple-400" />;
+        if (['pdf'].includes(ext || '')) return <FileText size={16} className="text-red-400" />;
 
-        return <File size={16} className="text-gray-400" />;
+        return <File size={16} className="text-neutral-500" />;
     };
 
     return (
         <div>
             <div
                 className={twMerge(
-                    "flex items-center gap-1.5 py-1 px-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors select-none",
-                    isSelected && "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                    "flex items-center gap-1.5 py-1.5 px-2 cursor-pointer rounded-lg hover:bg-neutral-800/60 transition-colors select-none",
+                    isSelected && "bg-[#d4ff5e]/10 text-[#d4ff5e]"
                 )}
                 style={{ paddingLeft: `${level * 12 + 8}px` }}
                 onClick={handleSelect}
             >
                 <button
                     onClick={handleToggle}
-                    className={clsx("p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400", !hasChildren && "invisible")}
+                    className={clsx("p-0.5 rounded hover:bg-neutral-700 text-neutral-500", !hasChildren && "invisible")}
                 >
                     {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </button>
 
                 {getIcon()}
 
-                <span className="truncate text-sm font-medium opacity-90">{node.url}</span>
+                <span className="truncate text-sm font-medium text-neutral-200">{node.url}</span>
 
                 {node.children && (
-                    <span className="text-xs text-gray-400 ml-auto">
+                    <span className="text-xs text-neutral-500 ml-auto px-2 py-0.5 rounded-full bg-neutral-800">
                         {node.children.length}
                     </span>
                 )}
@@ -73,7 +73,7 @@ export function SitemapTree({ node, onSelect, selectedNode, level = 0 }: Sitemap
                 <div className="relative">
                     {/* Indentation Guide */}
                     <div
-                        className="absolute left-0 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"
+                        className="absolute left-0 top-0 bottom-0 w-px bg-neutral-800"
                         style={{ left: `${level * 12 + 15}px` }}
                     />
                     <div>

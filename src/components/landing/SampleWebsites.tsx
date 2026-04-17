@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { ExternalLink } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 
 const SAMPLES = [
     { name: 'sunithvs.com', url: 'https://sunithvs.com' },
@@ -17,20 +17,22 @@ export function SampleWebsites() {
     };
 
     return (
-        <section className="py-12 border-y border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+        <section className="py-10 md:py-14 bg-[#0a0a0a]">
             <div className="container mx-auto px-4">
-                <p className="text-center text-sm font-semibold text-gray-500 uppercase tracking-wider mb-6">
+                <p className="text-center text-xs font-semibold text-neutral-500 uppercase tracking-[0.2em] mb-5">
                     Try these popular websites
                 </p>
-                <div className="flex flex-wrap justify-center gap-4">
+                <div className="flex flex-wrap justify-center gap-3">
                     {SAMPLES.map((sample) => (
                         <button
                             key={sample.name}
                             onClick={() => handleSampleClick(sample.url)}
-                            className="group flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-md transition-all text-gray-700 dark:text-gray-300 font-medium"
+                            className="group inline-flex items-center gap-2 pl-5 pr-1 py-1 bg-[#141414] border border-neutral-800 rounded-full hover:border-[#d4ff5e]/50 hover:bg-[#1a1a1a] transition-all text-neutral-200 font-medium text-sm"
                         >
                             {sample.name}
-                            <ExternalLink size={14} className="text-gray-400 group-hover:text-blue-500 transition-colors" />
+                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#d4ff5e] text-black group-hover:scale-110 transition-transform">
+                                <ArrowUpRight size={14} />
+                            </span>
                         </button>
                     ))}
                 </div>

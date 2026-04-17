@@ -1,6 +1,6 @@
 Product Requirement Document (PRD)
 
-Project Name: XML Nexus (Sitemap Explorer & Visualizer)
+Project Name: SiteLens (Sitemap Explorer & Visualizer)
 
 Version: 1.0
 
@@ -10,7 +10,7 @@ Platform: Web (Next.js)
 
 1. Executive Summary
 
-XML Nexus is a web-based utility tool built on Next.js designed for SEO specialists, developers, and QA engineers. It allows users to input a domain URL, automatically discover sitemap locations (via heuristics and robots.txt), and perform a recursive Depth-First Search (DFS) to traverse sitemap indices. The tool visualizes the hierarchy of sitemaps and URLs, providing a deep dive into a website's architectural structure as presented to search engines.
+SiteLens is a web-based utility tool built on Next.js designed for SEO specialists, developers, and QA engineers. It allows users to input a domain URL, automatically discover sitemap locations (via heuristics and robots.txt), and perform a recursive Depth-First Search (DFS) to traverse sitemap indices. The tool visualizes the hierarchy of sitemaps and URLs, providing a deep dive into a website's architectural structure as presented to search engines.
 
 2. Problem Statement
 

@@ -1,16 +1,17 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Fuse from 'fuse.js';
 import { SitemapTree } from '@/components/SitemapTree';
 import { SitemapTable } from '@/components/SitemapTable';
 import { SitemapGrid } from '@/components/SitemapGrid';
 import { DetailPanel } from '@/components/DetailPanel';
 import { StatsDashboard } from '@/components/StatsDashboard';
-import { FreshnessHeatmap } from '@/components/FreshnessHeatmap';
+import { SeoAnalytics } from '@/components/SeoAnalytics';
 import { SitemapNode, ScanResult } from '@/lib/sitemap-scanner';
-import { Search, LayoutList, Grid, ListTree, ArrowLeft, Maximize2, Minimize2, AlertTriangle, Activity } from 'lucide-react';
+import { Search, LayoutList, Grid, ListTree, ArrowLeft, Maximize2, Minimize2, AlertTriangle, Activity, Download, FileJson, FileSpreadsheet } from 'lucide-react';
 import { clsx } from 'clsx';
+import { toCsv, toJson, download, sanitizeSlug } from '@/lib/export';
 
 type ViewMode = 'tree' | 'table' | 'grid' | 'seo';
 
@@ -24,6 +25,43 @@ export function SitemapVisualization({ result, loading }: SitemapVisualizationPr
     const [viewMode, setViewMode] = useState<ViewMode>('tree');
     const [searchQuery, setSearchQuery] = useState('');
     const [isFullScreen, setIsFullScreen] = useState(false);
+    const [exportOpen, setExportOpen] = useState(false);
+
+    const exportName = useMemo(() => {
+        try {
+            const firstUrl = result.nodes[0]?.url;
+            if (firstUrl) {
+                return sanitizeSlug(new URL(firstUrl).hostname);
+            }
+        } catch { /* noop */ }
+        return 'sitelens-export';
+    }, [result]);
+
+    const handleExportCsv = () => {
+        download(`${exportName}.csv`, toCsv(result), 'text/csv;charset=utf-8');
+        setExportOpen(false);
+    };
+    const handleExportJson = () => {
+        download(`${exportName}.json`, toJson(result), 'application/json');
+        setExportOpen(false);
+    };
+
+    // Sync detail view with browser back button: push a dummy history entry when
+    // opening a detail, pop it (closing the detail) when the user presses back.
+    useEffect(() => {
+        if (!selectedNode) return;
+        const handler = () => setSelectedNode(null);
+        window.history.pushState({ sitelensDetail: true }, '');
+        window.addEventListener('popstate', handler);
+        return () => {
+            window.removeEventListener('popstate', handler);
+            // If detail is being closed programmatically (not via popstate),
+            // roll back the dummy history entry so browser back still works correctly.
+            if (window.history.state?.sitelensDetail) {
+                window.history.back();
+            }
+        };
+    }, [selectedNode]);
 
     const filteredNodes = useMemo(() => {
         if (!result) return [];
@@ -66,22 +104,22 @@ export function SitemapVisualization({ result, loading }: SitemapVisualizationPr
     // Full-screen Details View
     if (selectedNode) {
         return (
-            <div className="fixed inset-0 z-50 bg-gray-50 dark:bg-gray-900 p-4 md:p-8 flex flex-col h-screen overflow-hidden">
+            <div className="fixed inset-0 z-50 bg-[#0a0a0a] p-4 md:p-8 flex flex-col h-screen overflow-hidden">
                 <div className="max-w-7xl mx-auto w-full h-full flex flex-col">
-                    <div className="mb-4 flex items-center gap-4">
+                    <div className="mb-4 flex items-center gap-3">
                         <button
                             onClick={() => setSelectedNode(null)}
-                            className="p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition-colors flex items-center gap-2 text-gray-700 dark:text-gray-300 font-medium"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#141414] border border-neutral-800 hover:border-neutral-600 text-neutral-300 hover:text-white font-medium text-sm transition-colors"
                         >
-                            <ArrowLeft size={20} />
-                            Back to List
+                            <ArrowLeft size={16} />
+                            Back
                         </button>
-                        <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate">
+                        <h1 className="text-xl md:text-2xl font-black text-white truncate tracking-tight">
                             Details
                         </h1>
                     </div>
 
-                    <div className="flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden p-6">
+                    <div className="flex-1 bg-[#141414] rounded-3xl border border-neutral-800 overflow-hidden p-5 md:p-6">
                         <DetailPanel node={selectedNode} />
                     </div>
                 </div>
@@ -93,24 +131,24 @@ export function SitemapVisualization({ result, loading }: SitemapVisualizationPr
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <div className="flex-1 flex flex-col max-w-[1920px] mx-auto w-full h-full p-4 gap-4 overflow-y-auto">
 
-                {/* Stats Dashboard - Only show if NOT in specific SEO detailed mode? Or keep it? Keep it. */}
+                {/* Stats Dashboard */}
                 <div className="flex-none">
                     <StatsDashboard result={result} loading={loading} />
                 </div>
 
-                {/* Error Report - Collapsible if we have results */}
+                {/* Error Report */}
                 {result.errors.length > 0 && (
                     <div className="flex-none">
-                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
-                            <h3 className="flex items-center gap-2 text-red-800 dark:text-red-200 font-medium mb-2 text-sm">
+                        <div className="bg-[#1a1010] border border-red-900/40 rounded-3xl p-5">
+                            <h3 className="flex items-center gap-2 text-red-300 font-semibold mb-3 text-sm">
                                 <AlertTriangle size={16} />
                                 {result.nodes.length > 0
-                                    ? `Partial Success: ${result.errors.length} sitemaps failed to load`
-                                    : `Scan Failed: ${result.errors.length} errors found`}
+                                    ? `Partial Success — ${result.errors.length} sitemaps failed to load`
+                                    : `Scan Failed — ${result.errors.length} errors found`}
                             </h3>
                             <ul className="space-y-1 max-h-32 overflow-y-auto">
                                 {result.errors.map((err, i) => (
-                                    <li key={i} className="text-xs text-red-600 dark:text-red-400 font-mono break-all">
+                                    <li key={i} className="text-xs text-red-400/80 font-mono break-all">
                                         {err}
                                     </li>
                                 ))}
@@ -121,90 +159,136 @@ export function SitemapVisualization({ result, loading }: SitemapVisualizationPr
 
                 {/* Toolbar & Content Container */}
                 <div className={clsx(
-                    "flex-1 flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300",
+                    "flex-1 flex flex-col bg-[#141414] rounded-3xl border border-neutral-800 overflow-hidden transition-all duration-300",
                     isFullScreen ? "fixed inset-0 z-[100] rounded-none border-0" : "min-h-[500px]"
                 )}>
                     {/* Toolbar */}
-                    <div className="flex-none p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex flex-col sm:flex-row gap-4 justify-between items-center">
-                        <div className="flex items-center gap-4 w-full sm:w-auto">
+                    <div className="flex-none p-4 md:p-5 border-b border-neutral-800 flex flex-col lg:flex-row gap-3 lg:gap-4 lg:justify-between lg:items-center">
+                        <div className="flex items-center gap-4 w-full lg:w-auto">
                             <div>
-                                <h2 className="font-semibold text-gray-900 dark:text-white">
+                                <h2 className="font-bold text-white tracking-tight text-lg">
                                     {viewMode === 'seo' ? 'SEO Analysis' : 'Structure'}
                                 </h2>
-                                <div className="text-xs text-gray-500 mt-1">
-                                    {result.totalSitemaps} sitemaps, {result.totalUrls} URLs
+                                <div className="text-xs text-neutral-500 mt-0.5 font-mono">
+                                    {result.totalSitemaps} sitemaps · {result.totalUrls} URLs
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3 w-full sm:w-auto">
-                            {/* Search - Hide in SEO mode? No, might filter heatmap later? For now keep it. */}
-                            <div className="relative flex-1 sm:w-64">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                            {/* Search */}
+                            <div className="relative w-full sm:flex-1 lg:flex-none lg:w-64">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" size={15} />
                                 <input
                                     type="text"
                                     placeholder="Filter URLs..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                                    className="w-full pl-10 pr-4 py-2.5 rounded-full border border-neutral-800 bg-[#0a0a0a] text-sm outline-none focus:border-[#d4ff5e]/40 text-white placeholder:text-neutral-500 transition-colors"
                                 />
                             </div>
 
-                            {/* View Toggles */}
-                            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg flex-shrink-0">
+                            <div className="flex items-center gap-2 justify-between sm:justify-start">
+                                {/* View Toggles — pill style */}
+                                <div className="flex items-center gap-1 bg-[#0a0a0a] border border-neutral-800 p-1 rounded-full flex-shrink-0">
+                                    <button
+                                        onClick={() => setViewMode('tree')}
+                                        className={clsx("p-2 rounded-full transition-all", viewMode === 'tree' ? "bg-[#d4ff5e] text-black" : "text-neutral-500 hover:text-white")}
+                                        title="Tree View"
+                                    >
+                                        <ListTree size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('table')}
+                                        className={clsx("p-2 rounded-full transition-all", viewMode === 'table' ? "bg-[#d4ff5e] text-black" : "text-neutral-500 hover:text-white")}
+                                        title="Table View"
+                                    >
+                                        <LayoutList size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('grid')}
+                                        className={clsx("p-2 rounded-full transition-all", viewMode === 'grid' ? "bg-[#d4ff5e] text-black" : "text-neutral-500 hover:text-white")}
+                                        title="Grid View"
+                                    >
+                                        <Grid size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('seo')}
+                                        className={clsx("p-2 rounded-full transition-all", viewMode === 'seo' ? "bg-[#ff9330] text-black" : "text-neutral-500 hover:text-white")}
+                                        title="SEO Analysis"
+                                    >
+                                        <Activity size={16} />
+                                    </button>
+                                </div>
+
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setExportOpen(!exportOpen)}
+                                        className={clsx(
+                                            "inline-flex items-center gap-1.5 pl-3 pr-3 py-2 rounded-full transition-all border text-xs font-semibold",
+                                            exportOpen
+                                                ? "bg-[#d4ff5e] text-black border-[#d4ff5e]"
+                                                : "bg-[#0a0a0a] border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-600"
+                                        )}
+                                        title="Export"
+                                    >
+                                        <Download size={14} />
+                                        <span>Export</span>
+                                    </button>
+                                    {exportOpen && (
+                                        <>
+                                            <div
+                                                className="fixed inset-0 z-40"
+                                                onClick={() => setExportOpen(false)}
+                                            />
+                                            <div className="absolute right-0 mt-2 w-56 bg-[#141414] border border-neutral-800 rounded-2xl shadow-xl z-50 overflow-hidden">
+                                                <button
+                                                    onClick={handleExportCsv}
+                                                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-neutral-200 hover:bg-[#1c1c1c]"
+                                                >
+                                                    <FileSpreadsheet size={16} className="text-[#d4ff5e]" />
+                                                    <div>
+                                                        <div className="font-semibold">Export CSV</div>
+                                                        <div className="text-xs text-neutral-500">Flat URL list</div>
+                                                    </div>
+                                                </button>
+                                                <div className="h-px bg-neutral-800" />
+                                                <button
+                                                    onClick={handleExportJson}
+                                                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-neutral-200 hover:bg-[#1c1c1c]"
+                                                >
+                                                    <FileJson size={16} className="text-[#ff9330]" />
+                                                    <div>
+                                                        <div className="font-semibold">Export JSON</div>
+                                                        <div className="text-xs text-neutral-500">Full tree structure</div>
+                                                    </div>
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+
                                 <button
-                                    onClick={() => setViewMode('tree')}
-                                    className={clsx("p-2 rounded-md transition-all", viewMode === 'tree' ? "bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-400" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300")}
-                                    title="Tree View"
+                                    onClick={() => setIsFullScreen(!isFullScreen)}
+                                    className={clsx(
+                                        "p-2.5 rounded-full transition-all border",
+                                        isFullScreen
+                                            ? "bg-[#d4ff5e] text-black border-[#d4ff5e]"
+                                            : "bg-[#0a0a0a] border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-600"
+                                    )}
+                                    title={isFullScreen ? "Exit Full Screen" : "Full Screen"}
                                 >
-                                    <ListTree size={18} />
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('table')}
-                                    className={clsx("p-2 rounded-md transition-all", viewMode === 'table' ? "bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-400" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300")}
-                                    title="Table View"
-                                >
-                                    <LayoutList size={18} />
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('grid')}
-                                    className={clsx("p-2 rounded-md transition-all", viewMode === 'grid' ? "bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-400" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300")}
-                                    title="Grid View"
-                                >
-                                    <Grid size={18} />
-                                </button>
-                                <div className="w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1" />
-                                <button
-                                    onClick={() => setViewMode('seo')}
-                                    className={clsx("p-2 rounded-md transition-all", viewMode === 'seo' ? "bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-400" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300")}
-                                    title="SEO Analysis"
-                                >
-                                    <Activity size={18} />
+                                    {isFullScreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
                                 </button>
                             </div>
-
-                            <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
-
-                            <button
-                                onClick={() => setIsFullScreen(!isFullScreen)}
-                                className={clsx(
-                                    "p-2 rounded-lg transition-all",
-                                    isFullScreen
-                                        ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                                        : "bg-gray-100 dark:bg-gray-700 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                                )}
-                                title={isFullScreen ? "Exit Full Screen" : "Full Screen"}
-                            >
-                                {isFullScreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-                            </button>
                         </div>
                     </div>
 
                     {/* Content Area */}
-                    <div className="flex-1 overflow-auto p-2 text-gray-900 dark:text-gray-200 min-h-0 bg-gray-50 dark:bg-gray-900/50">
+                    <div className="flex-1 overflow-auto p-3 md:p-4 text-neutral-200 min-h-0 bg-[#0f0f0f]">
                         {viewMode === 'seo' ? (
-                            <div className="h-full p-2">
-                                <FreshnessHeatmap result={result} />
+                            <div className="h-full p-1">
+                                <SeoAnalytics result={result} />
                             </div>
                         ) : (
                             <>
@@ -233,8 +317,8 @@ export function SitemapVisualization({ result, loading }: SitemapVisualizationPr
                                     />
                                 )}
                                 {filteredNodes.length === 0 && (
-                                    <div className="p-8 text-center text-gray-400">
-                                        No results found matching "{searchQuery}"
+                                    <div className="p-8 text-center text-neutral-500">
+                                        No results matching "{searchQuery}"
                                     </div>
                                 )}
                             </>

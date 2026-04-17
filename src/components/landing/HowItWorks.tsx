@@ -1,52 +1,65 @@
 import React from 'react';
-import { ArrowRight } from 'lucide-react';
 
 const STEPS = [
     {
         number: '01',
         title: 'Enter URL',
-        description: 'Paste your website URL or direct sitemap link. We automatically detect robots.txt and sitemaps.'
+        description: 'Paste your website URL or direct sitemap link. We automatically detect robots.txt and sitemaps.',
+        badge: 'Input',
     },
     {
         number: '02',
         title: 'Scan & Visualize',
-        description: 'Our engine crawls your sitemap recursively, building a visual tree of your entire website structure.'
+        description: 'Our engine crawls your sitemap recursively, building a visual tree of your entire website structure.',
+        badge: 'Process',
     },
     {
         number: '03',
         title: 'Analyze & Optimize',
-        description: 'Drill down into specific URLs, check SEO metrics, and identify opportunities for improvement.'
+        description: 'Drill down into specific URLs, check SEO metrics, and identify opportunities for improvement.',
+        badge: 'Output',
     }
 ];
 
 export function HowItWorks() {
     return (
-        <section className="py-24 bg-gray-50 dark:bg-gray-900/50">
+        <section className="py-20 md:py-28 bg-[#0a0a0a] border-t border-neutral-900">
             <div className="container mx-auto px-4">
-                <div className="text-center max-w-3xl mx-auto mb-16">
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                        How it works
+                <div className="max-w-3xl mb-14 md:mb-16">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#141414] border border-neutral-800 text-xs font-medium text-neutral-400 mb-5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#ff9330]" />
+                        HOW IT WORKS
+                    </div>
+                    <h2 className="text-4xl md:text-6xl font-black text-white mb-5 tracking-[-0.03em] leading-[1]">
+                        Get started in <span className="italic text-[#d4ff5e]">seconds</span>.
                     </h2>
-                    <p className="text-lg text-gray-600 dark:text-gray-400">
-                        Get started in seconds. No sign-up required.
+                    <p className="text-base md:text-lg text-neutral-400">
+                        No sign-up required.
                     </p>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-8 relative">
-                    {/* Connecting Line (Desktop) */}
-                    <div className="hidden md:block absolute top-12 left-1/6 right-1/6 h-0.5 bg-gray-200 dark:bg-gray-700 z-0"></div>
-
+                <div className="grid md:grid-cols-3 gap-4">
                     {STEPS.map((step, index) => (
-                        <div key={index} className="relative z-10 text-center">
-                            <div className="w-24 h-24 mx-auto bg-white dark:bg-gray-800 rounded-full border-4 border-gray-50 dark:border-gray-900 shadow-lg flex items-center justify-center mb-6">
-                                <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">{step.number}</span>
+                        <div
+                            key={index}
+                            className="relative p-6 md:p-8 rounded-3xl bg-[#141414] border border-neutral-800 hover:border-neutral-700 transition-colors overflow-hidden"
+                        >
+                            {/* Number watermark */}
+                            <div className="absolute -top-6 -right-2 text-[10rem] font-black text-neutral-900/80 pointer-events-none leading-none select-none">
+                                {step.number}
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                                {step.title}
-                            </h3>
-                            <p className="text-gray-600 dark:text-gray-400 max-w-xs mx-auto">
-                                {step.description}
-                            </p>
+
+                            <div className="relative z-10">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1c1c1c] border border-neutral-800 text-xs font-medium text-neutral-400 mb-6">
+                                    Step {step.number}
+                                </div>
+                                <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">
+                                    {step.title}
+                                </h3>
+                                <p className="text-neutral-400 leading-relaxed text-sm max-w-xs">
+                                    {step.description}
+                                </p>
+                            </div>
                         </div>
                     ))}
                 </div>

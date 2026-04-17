@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
                                         const testUrl = new URL(path, urlObj.origin).toString();
                                         const res = await fetch(testUrl, {
                                             method: 'HEAD',
-                                            headers: { 'User-Agent': 'XML-Nexus-Bot/1.0' },
+                                            headers: { 'User-Agent': 'SiteLens-Bot/1.0' },
                                             signal: AbortSignal.timeout(3000)
                                         });
                                         // Check if it exists and is XMLish (or just 200 OK)

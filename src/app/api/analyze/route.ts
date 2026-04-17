@@ -11,7 +11,7 @@ export async function POST(req: Request) {
 
         const response = await fetch(url, {
             headers: {
-                'User-Agent': 'XML-Nexus-Bot/1.0 (SEO Analyzer)'
+                'User-Agent': 'SiteLens-Bot/1.0 (SEO Analyzer)'
             },
             signal: AbortSignal.timeout(10000)
         });

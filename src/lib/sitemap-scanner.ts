@@ -297,7 +297,7 @@ export class SitemapScanner {
             console.log(`Scanning: ${url} (Depth: ${depth})`);
             const response = await fetch(url, {
                 headers: {
-                    'User-Agent': 'XML-Nexus-Bot/1.0'
+                    'User-Agent': 'SiteLens-Bot/1.0'
                 },
                 signal: AbortSignal.timeout(10000) // Increased timeout for large files
             });

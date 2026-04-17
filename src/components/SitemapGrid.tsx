@@ -31,30 +31,30 @@ export function SitemapGrid({ nodes, onSelect, selectedNode }: SitemapGridProps)
                 <div
                     key={`${node.url}-${index}`}
                     onClick={() => onSelect(node)}
-                    className={`p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md flex flex-col items-center text-center gap-2
+                    className={`p-4 rounded-2xl border cursor-pointer transition-all flex flex-col items-start gap-3
             ${selectedNode?.url === node.url
-                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
-                            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300'
+                            ? 'border-[#d4ff5e] bg-[#d4ff5e]/5'
+                            : 'border-neutral-800 bg-[#141414] hover:border-neutral-700 hover:bg-[#1a1a1a]'
                         }`}
                 >
-                    {node.type === 'sitemap' ? (
-                        <Folder size={32} className="text-yellow-500 mb-1" />
-                    ) : (
-                        <FileText size={32} className="text-gray-400 mb-1" />
-                    )}
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${node.type === 'sitemap' ? 'bg-[#d4ff5e] text-black' : 'bg-neutral-800 text-neutral-400'}`}>
+                        {node.type === 'sitemap' ? <Folder size={18} /> : <FileText size={18} />}
+                    </div>
 
-                    <div className="w-full">
-                        <div className="text-xs font-medium text-gray-900 dark:text-white truncate w-full" title={node.url}>
+                    <div className="w-full min-w-0">
+                        <div className="text-sm font-semibold text-white truncate w-full" title={node.url}>
                             {node.url.split('/').pop() || node.url}
                         </div>
-                        <div className="text-[10px] text-gray-500 truncate w-full mt-1">
+                        <div className="text-[10px] text-neutral-500 truncate w-full mt-1 font-mono">
                             {node.url}
                         </div>
                     </div>
 
-                    <div className="mt-auto pt-2 flex gap-2 text-[10px] text-gray-400">
-                        {node.lastmod && <span>{new Date(node.lastmod).toLocaleDateString()}</span>}
-                    </div>
+                    {node.lastmod && (
+                        <div className="mt-auto text-[10px] text-neutral-500 font-mono">
+                            {new Date(node.lastmod).toLocaleDateString()}
+                        </div>
+                    )}
                 </div>
             ))}
         </div>

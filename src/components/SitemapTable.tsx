@@ -26,30 +26,34 @@ export function SitemapTable({ nodes, onSelect, selectedNode }: SitemapTableProp
     const flatList = flattenNodes(nodes);
 
     return (
-        <div className="overflow-auto h-full">
-            <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 sticky top-0">
+        <div className="overflow-auto h-full rounded-2xl border border-neutral-800">
+            <table className="w-full text-left text-sm text-neutral-400">
+                <thead className="text-xs text-neutral-500 uppercase bg-[#141414] sticky top-0 tracking-wider">
                     <tr>
-                        <th scope="col" className="px-6 py-3">URL</th>
-                        <th scope="col" className="px-6 py-3">Type</th>
-                        <th scope="col" className="px-6 py-3">Last Modified</th>
-                        <th scope="col" className="px-6 py-3">Priority</th>
+                        <th scope="col" className="px-5 py-3 font-semibold">URL</th>
+                        <th scope="col" className="px-5 py-3 font-semibold">Type</th>
+                        <th scope="col" className="px-5 py-3 font-semibold">Last Modified</th>
+                        <th scope="col" className="px-5 py-3 font-semibold">Priority</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody className="bg-[#0f0f0f]">
                     {flatList.map((node, index) => (
                         <tr
                             key={`${node.url}-${index}`}
                             onClick={() => onSelect(node)}
-                            className={`bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer ${selectedNode?.url === node.url ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+                            className={`border-b border-neutral-900 hover:bg-[#141414] cursor-pointer transition-colors ${selectedNode?.url === node.url ? 'bg-[#d4ff5e]/5' : ''}`}
                         >
-                            <td className="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap flex items-center gap-2">
-                                {node.type === 'sitemap' ? <Folder size={16} className="text-yellow-500" /> : <FileText size={16} className="text-gray-500" />}
-                                <span className="truncate max-w-xs" title={node.url}>{node.url}</span>
+                            <td className="px-5 py-3 font-medium text-white whitespace-nowrap flex items-center gap-2.5">
+                                {node.type === 'sitemap' ? <Folder size={14} className="text-[#d4ff5e]" /> : <FileText size={14} className="text-neutral-500" />}
+                                <span className="truncate max-w-xs font-mono text-xs" title={node.url}>{node.url}</span>
                             </td>
-                            <td className="px-6 py-4 capitalize">{node.type}</td>
-                            <td className="px-6 py-4">{node.lastmod || '-'}</td>
-                            <td className="px-6 py-4">{node.priority || '-'}</td>
+                            <td className="px-5 py-3">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${node.type === 'sitemap' ? 'bg-[#d4ff5e]/10 text-[#d4ff5e]' : 'bg-neutral-800 text-neutral-400'}`}>
+                                    {node.type}
+                                </span>
+                            </td>
+                            <td className="px-5 py-3 font-mono text-xs">{node.lastmod || '—'}</td>
+                            <td className="px-5 py-3 font-mono text-xs">{node.priority || '—'}</td>
                         </tr>
                     ))}
                 </tbody>

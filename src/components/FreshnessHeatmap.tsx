@@ -54,11 +54,11 @@ export function FreshnessHeatmap({ result }: FreshnessHeatmapProps) {
         processNode(result.nodes);
 
         const data = [
-            { name: '< 7 Days', value: buckets['< 7 Days'], color: '#10b981' }, // Green
-            { name: '< 30 Days', value: buckets['< 30 Days'], color: '#34d399' },
-            { name: '< 6 Months', value: buckets['< 6 Months'], color: '#fbbf24' }, // Yellow
-            { name: '< 1 Year', value: buckets['< 1 Year'], color: '#f59e0b' }, // Orange
-            { name: '> 1 Year', value: buckets['> 1 Year'], color: '#ef4444' }, // Red
+            { name: '< 7 Days', value: buckets['< 7 Days'], color: '#d4ff5e' },
+            { name: '< 30 Days', value: buckets['< 30 Days'], color: '#a3e635' },
+            { name: '< 6 Months', value: buckets['< 6 Months'], color: '#facc15' },
+            { name: '< 1 Year', value: buckets['< 1 Year'], color: '#ff9330' },
+            { name: '> 1 Year', value: buckets['> 1 Year'], color: '#ef4444' },
         ];
 
         return { data, buckets, totalWithDate: totalWithDate.count };
@@ -69,29 +69,29 @@ export function FreshnessHeatmap({ result }: FreshnessHeatmapProps) {
         : 0;
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 h-full flex flex-col">
-            <div className="flex items-center justify-between mb-6">
+        <div className="bg-[#141414] p-5 md:p-6 rounded-3xl border border-neutral-800 h-full flex flex-col">
+            <div className="flex items-center justify-between mb-5 gap-3 flex-wrap">
                 <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Clock size={20} className="text-blue-500" />
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2 tracking-tight">
+                        <Clock size={18} className="text-[#d4ff5e]" />
                         Content Freshness
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-neutral-500 mt-1">
                         Distribution of content age based on lastmod
                     </p>
                 </div>
                 {missingDatePercentage > 50 && (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded-full text-xs font-medium">
-                        <AlertCircle size={14} />
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#ff9330]/10 text-[#ff9330] border border-[#ff9330]/30 rounded-full text-xs font-medium">
+                        <AlertCircle size={12} />
                         {missingDatePercentage}% URLs missing dates
                     </div>
                 )}
             </div>
 
-            <div className="flex-1 min-h-[300px]">
+            <div className="flex-1 min-h-[240px]">
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stats.data} layout="vertical" margin={{ left: 20, right: 30, top: 0, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e5e7eb" opacity={0.5} />
+                    <BarChart data={stats.data} layout="vertical" margin={{ left: 10, right: 30, top: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#262626" />
                         <XAxis type="number" hide />
                         <YAxis
                             dataKey="name"
@@ -99,19 +99,18 @@ export function FreshnessHeatmap({ result }: FreshnessHeatmapProps) {
                             axisLine={false}
                             tickLine={false}
                             width={80}
-                            tick={{ fill: '#6b7280', fontSize: 12, fontWeight: 500 }}
+                            tick={{ fill: '#737373', fontSize: 11, fontWeight: 500 }}
                         />
                         <Tooltip
                             cursor={{ fill: 'transparent' }}
                             contentStyle={{
-                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                                borderRadius: '8px',
-                                border: 'none',
-                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                                color: '#1f2937'
+                                backgroundColor: '#1c1c1c',
+                                borderRadius: '12px',
+                                border: '1px solid #262626',
+                                color: '#fafafa'
                             }}
                         />
-                        <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={32}>
+                        <Bar dataKey="value" radius={[0, 8, 8, 0]} barSize={28}>
                             {stats.data.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
@@ -120,21 +119,20 @@ export function FreshnessHeatmap({ result }: FreshnessHeatmapProps) {
                 </ResponsiveContainer>
             </div>
 
-            {/* Legend / Insight */}
-            <div className="mt-6 grid grid-cols-2 md:grid-cols-5 gap-2 border-t border-gray-100 dark:border-gray-700 pt-4">
+            <div className="mt-5 grid grid-cols-2 md:grid-cols-5 gap-2 border-t border-neutral-800 pt-4">
                 {stats.data.map((item) => (
-                    <div key={item.name} className="bg-gray-50 dark:bg-gray-900/50 p-2 rounded text-center">
-                        <div className="text-xs text-gray-500 mb-1">{item.name}</div>
-                        <div className="font-bold text-gray-900 dark:text-white" style={{ color: item.color }}>
+                    <div key={item.name} className="bg-[#0a0a0a] border border-neutral-800 p-2.5 rounded-2xl text-center">
+                        <div className="text-[10px] text-neutral-500 uppercase tracking-wider mb-1">{item.name}</div>
+                        <div className="font-black text-xl" style={{ color: item.color }}>
                             {item.value.toLocaleString()}
                         </div>
                     </div>
                 ))}
             </div>
 
-            <div className="mt-4 text-xs text-center text-gray-400">
-                Total URLs with dates: {stats.totalWithDate.toLocaleString()}
-                {stats.buckets['No Date'] > 0 && ` • Missing dates: ${stats.buckets['No Date'].toLocaleString()}`}
+            <div className="mt-3 text-xs text-center text-neutral-500 font-mono">
+                {stats.totalWithDate.toLocaleString()} with dates
+                {stats.buckets['No Date'] > 0 && ` · ${stats.buckets['No Date'].toLocaleString()} missing`}
             </div>
         </div>
     );

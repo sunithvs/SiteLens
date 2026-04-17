@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
@@ -15,24 +15,45 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'SiteLens - Sitemap Explorer & Visualizer',
-  description: 'Visualize, analyze, and optimize your website structure with SiteLens.',
+  title: {
+    default: 'SiteLens — Sitemap Explorer & SEO Visualizer',
+    template: '%s · SiteLens',
+  },
+  description: 'Scan, visualize, and audit any website sitemap. Check broken links, analyze SEO, validate XML, and export results. No sign-up required.',
+  applicationName: 'SiteLens',
+  keywords: ['sitemap', 'sitemap explorer', 'SEO audit', 'broken link checker', 'xml validator', 'crawler', 'site structure'],
+  authors: [{ name: 'SiteLens' }],
+  manifest: '/site.webmanifest',
   icons: {
     icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
       { url: '/favicon.ico' },
       { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
       { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
     ],
     apple: [
-      { url: '/apple-touch-icon.png' },
-    ],
-    other: [
-      {
-        rel: 'manifest',
-        url: '/site.webmanifest',
-      },
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
   },
+  openGraph: {
+    title: 'SiteLens — Sitemap Explorer & SEO Visualizer',
+    description: 'Scan, visualize, and audit any website sitemap. Check broken links, analyze SEO, validate XML.',
+    siteName: 'SiteLens',
+    images: [
+      { url: '/og-image.png', width: 1200, height: 630, alt: 'SiteLens — Visualize your sitemap instantly' },
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'SiteLens — Sitemap Explorer & SEO Visualizer',
+    description: 'Scan, visualize, and audit any website sitemap.',
+    images: ['/og-image.png'],
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#0a0a0a',
 };
 
 export default function RootLayout({
