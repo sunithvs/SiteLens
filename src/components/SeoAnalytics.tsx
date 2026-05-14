@@ -5,7 +5,7 @@ import { ScanResult } from '@/lib/sitemap-scanner';
 import { FreshnessHeatmap } from '@/components/FreshnessHeatmap';
 import { clsx } from 'clsx';
 import {
-    Activity, AlertTriangle, CheckCircle, Clock, Info, Layers, Link2, Loader2, XCircle
+    Activity, AlertTriangle, CheckCircle, Clock, Info, Layers, Link2, Loader2, ShieldCheck, XCircle
 } from 'lucide-react';
 import {
     validate,
@@ -17,7 +17,49 @@ import {
     FreshnessBucket,
 } from '@/lib/seo-analysis';
 
-type Tab = 'freshness' | 'validation' | 'patterns' | 'stale' | 'links';
+type Tab = 'freshness' | 'validation' | 'patterns' | 'stale' | 'links' | 'robots';
+
+interface RobotsRule {
+    type: string;
+    path: string;
+}
+
+interface RobotsGroup {
+    userAgents: string[];
+    rules: RobotsRule[];
+    crawlDelay?: number;
+}
+
+interface RobotsIssue {
+    severity: 'error' | 'warning' | 'info';
+    type: string;
+    message: string;
+}
+
+interface RobotsUrlCheck {
+    url: string;
+    allowed: boolean;
+    matchedRule?: { type: string; path: string };
+}
+
+interface RobotsResponse {
+    url: string;
+    fetched: boolean;
+    status?: number;
+    error?: string;
+    userAgent?: string;
+    parsed?: {
+        raw: string;
+        groups: RobotsGroup[];
+        sitemaps: string[];
+        host?: string;
+        unknownLines: Array<{ line: number; value: string }>;
+        warnings: string[];
+    } | null;
+    issues?: RobotsIssue[];
+    urlChecks?: RobotsUrlCheck[];
+    truncated?: number;
+}
 
 interface Props {
     result: ScanResult;
@@ -70,6 +112,42 @@ export function SeoAnalytics({ result }: Props) {
         }
     };
 
+    // robots.txt audit state
+    const [robotsData, setRobotsData] = useState<RobotsResponse | null>(null);
+    const [robotsLoading, setRobotsLoading] = useState(false);
+    const [robotsError, setRobotsError] = useState<string | null>(null);
+    const [robotsUa, setRobotsUa] = useState('Googlebot');
+
+    const siteOrigin = useMemo(() => {
+        const first = result.nodes[0]?.url;
+        if (!first) return '';
+        try { return new URL(first).origin; } catch { return ''; }
+    }, [result]);
+
+    const runRobotsCheck = async () => {
+        if (!siteOrigin) {
+            setRobotsError('Could not determine site origin from scan result');
+            return;
+        }
+        setRobotsLoading(true);
+        setRobotsError(null);
+        setRobotsData(null);
+        try {
+            const res = await fetch('/api/check-robots', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ site: siteOrigin, urls, userAgent: robotsUa }),
+            });
+            const data: RobotsResponse = await res.json();
+            if (!res.ok && !data?.fetched) throw new Error((data as { error?: string })?.error || 'Failed to check robots');
+            setRobotsData(data);
+        } catch (e: unknown) {
+            setRobotsError(e instanceof Error ? e.message : 'Failed to check robots');
+        } finally {
+            setRobotsLoading(false);
+        }
+    };
+
     const linkStats = useMemo(() => {
         if (!linkResults.length) return null;
         return {
@@ -79,12 +157,15 @@ export function SeoAnalytics({ result }: Props) {
         };
     }, [linkResults]);
 
+    const robotsBlocked = robotsData?.urlChecks?.filter((c) => !c.allowed).length || 0;
+
     const tabs: Array<{ id: Tab; label: string; icon: React.ElementType; badge?: number }> = [
         { id: 'freshness', label: 'Freshness', icon: Clock },
         { id: 'validation', label: 'Validation', icon: AlertTriangle, badge: errorCount + warningCount || undefined },
         { id: 'patterns', label: 'URL Patterns', icon: Layers },
         { id: 'stale', label: 'Stale URLs', icon: Activity, badge: staleCount || undefined },
         { id: 'links', label: 'Broken Links', icon: Link2 },
+        { id: 'robots', label: 'Robots.txt', icon: ShieldCheck, badge: robotsBlocked || undefined },
     ];
 
     return (
@@ -131,6 +212,18 @@ export function SeoAnalytics({ result }: Props) {
                         truncated={linkTruncated}
                         stats={linkStats}
                         onRun={runLinkCheck}
+                    />
+                )}
+                {tab === 'robots' && (
+                    <RobotsPanel
+                        data={robotsData}
+                        loading={robotsLoading}
+                        error={robotsError}
+                        userAgent={robotsUa}
+                        onUserAgentChange={setRobotsUa}
+                        siteOrigin={siteOrigin}
+                        urlCount={urls.length}
+                        onRun={runRobotsCheck}
                     />
                 )}
             </div>
@@ -362,6 +455,209 @@ function LinksPanel({
                         </tbody>
                     </table>
                 </div>
+            )}
+        </div>
+    );
+}
+
+// ——— Robots.txt tab ———
+function RobotsPanel({
+    data, loading, error, userAgent, onUserAgentChange, siteOrigin, urlCount, onRun,
+}: {
+    data: RobotsResponse | null;
+    loading: boolean;
+    error: string | null;
+    userAgent: string;
+    onUserAgentChange: (v: string) => void;
+    siteOrigin: string;
+    urlCount: number;
+    onRun: () => void;
+}) {
+    const blocked = data?.urlChecks?.filter((c) => !c.allowed) || [];
+    const allowed = data?.urlChecks?.filter((c) => c.allowed) || [];
+
+    return (
+        <div className="space-y-4">
+            {/* Controls */}
+            <div className="bg-[#141414] rounded-3xl border border-neutral-800 p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="min-w-0">
+                    <h3 className="font-bold text-white tracking-tight">Robots.txt Audit</h3>
+                    <p className="text-xs text-neutral-500 mt-1 font-mono truncate">
+                        {siteOrigin ? `${siteOrigin}/robots.txt` : 'No origin detected from scan'}
+                    </p>
+                </div>
+                <div className="flex items-center gap-3 flex-wrap">
+                    <label className="text-xs text-neutral-400 inline-flex items-center gap-2">
+                        Crawler:
+                        <select
+                            value={userAgent}
+                            onChange={(e) => onUserAgentChange(e.target.value)}
+                            className="bg-[#0a0a0a] border border-neutral-800 rounded-full px-3 py-1.5 text-xs text-white outline-none focus:border-[#d4ff5e]/40"
+                        >
+                            <option value="Googlebot">Googlebot</option>
+                            <option value="Googlebot-Image">Googlebot-Image</option>
+                            <option value="Bingbot">Bingbot</option>
+                            <option value="DuckDuckBot">DuckDuckBot</option>
+                            <option value="*">Any (*)</option>
+                        </select>
+                    </label>
+                    <button
+                        onClick={onRun}
+                        disabled={loading || !siteOrigin}
+                        className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#d4ff5e] hover:bg-[#e7ff8a] text-black font-bold rounded-full transition-colors disabled:opacity-50 text-sm"
+                    >
+                        {loading ? <Loader2 size={15} className="animate-spin" /> : <ShieldCheck size={15} />}
+                        {loading ? 'Checking…' : data ? 'Re-run' : `Audit ${urlCount} URLs`}
+                    </button>
+                </div>
+            </div>
+
+            {error && (
+                <div className="p-4 rounded-2xl bg-red-500/10 border border-red-900/40 text-red-400 text-sm">
+                    {error}
+                </div>
+            )}
+
+            {data && !data.fetched && (
+                <div className="p-5 rounded-2xl bg-[#ff9330]/10 border border-[#ff9330]/30 text-[#ff9330] text-sm">
+                    <div className="font-semibold mb-1">robots.txt not loaded</div>
+                    <div className="text-neutral-300 text-xs">{data.error}</div>
+                </div>
+            )}
+
+            {data?.fetched && data.parsed && (
+                <>
+                    {/* Issue list */}
+                    {data.issues && data.issues.length > 0 && (
+                        <div className="space-y-2">
+                            {data.issues.map((iss, i) => {
+                                const Icon = iss.severity === 'error' ? XCircle : iss.severity === 'warning' ? AlertTriangle : Info;
+                                const tone =
+                                    iss.severity === 'error' ? 'text-red-400 bg-red-500/10 border-red-900/40' :
+                                    iss.severity === 'warning' ? 'text-[#ff9330] bg-[#ff9330]/10 border-[#ff9330]/30' :
+                                    'text-neutral-400 bg-neutral-800/40 border-neutral-800';
+                                return (
+                                    <div key={i} className={clsx('p-4 rounded-2xl border flex items-start gap-3', tone)}>
+                                        <Icon size={16} className="flex-shrink-0 mt-0.5" />
+                                        <div className="min-w-0 flex-1">
+                                            <div className="text-sm font-semibold">{iss.message}</div>
+                                            <div className="text-[10px] text-neutral-500 uppercase tracking-wider mt-1 font-mono">{iss.type}</div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* Summary stats */}
+                    {data.urlChecks && data.urlChecks.length > 0 && (
+                        <div className="grid grid-cols-3 gap-3">
+                            <div className="p-4 rounded-2xl bg-[#d4ff5e]/10 border border-[#d4ff5e]/30">
+                                <div className="text-[10px] text-neutral-500 uppercase tracking-wider">Allowed</div>
+                                <div className="text-3xl font-black text-[#d4ff5e] mt-1">{allowed.length}</div>
+                            </div>
+                            <div className="p-4 rounded-2xl bg-red-500/10 border border-red-900/40">
+                                <div className="text-[10px] text-neutral-500 uppercase tracking-wider">Blocked</div>
+                                <div className="text-3xl font-black text-red-400 mt-1">{blocked.length}</div>
+                            </div>
+                            <div className="p-4 rounded-2xl bg-[#141414] border border-neutral-800">
+                                <div className="text-[10px] text-neutral-500 uppercase tracking-wider">Sitemaps</div>
+                                <div className="text-3xl font-black text-white mt-1">{data.parsed.sitemaps.length}</div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Blocked URLs */}
+                    {blocked.length > 0 && (
+                        <div className="bg-[#141414] rounded-3xl border border-red-900/40 overflow-hidden">
+                            <div className="px-5 py-3 border-b border-neutral-800 flex items-center gap-2">
+                                <XCircle size={16} className="text-red-400" />
+                                <h4 className="font-bold text-white text-sm">URLs in sitemap blocked by robots.txt ({blocked.length})</h4>
+                            </div>
+                            <div className="max-h-80 overflow-auto">
+                                <table className="w-full text-xs">
+                                    <thead className="bg-[#1a1a1a] text-[10px] text-neutral-500 uppercase tracking-wider sticky top-0">
+                                        <tr>
+                                            <th className="px-4 py-2 text-left font-semibold">URL</th>
+                                            <th className="px-4 py-2 text-left font-semibold">Blocked by rule</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-neutral-800">
+                                        {blocked.map((c) => (
+                                            <tr key={c.url}>
+                                                <td className="px-4 py-2 font-mono text-white truncate max-w-[400px]">{c.url}</td>
+                                                <td className="px-4 py-2 font-mono text-red-400">
+                                                    {c.matchedRule ? `${c.matchedRule.type} ${c.matchedRule.path}` : '—'}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Parsed groups */}
+                    <div className="bg-[#141414] rounded-3xl border border-neutral-800 overflow-hidden">
+                        <div className="px-5 py-3 border-b border-neutral-800">
+                            <h4 className="font-bold text-white text-sm">Detected rules</h4>
+                        </div>
+                        <div className="divide-y divide-neutral-800">
+                            {data.parsed.groups.map((g, i) => (
+                                <div key={i} className="p-5">
+                                    <div className="flex items-center gap-2 mb-3 flex-wrap">
+                                        {g.userAgents.map((ua) => (
+                                            <span key={ua} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-[#d4ff5e]/10 text-[#d4ff5e] border border-[#d4ff5e]/30">
+                                                {ua}
+                                            </span>
+                                        ))}
+                                        {g.crawlDelay !== undefined && (
+                                            <span className="text-[10px] text-neutral-500 font-mono">
+                                                crawl-delay: {g.crawlDelay}s
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1">
+                                        {g.rules.map((r, j) => (
+                                            <div key={j} className="flex items-center gap-3 text-xs font-mono">
+                                                <span className={clsx(
+                                                    'inline-block w-20 px-2 py-0.5 rounded text-center font-bold',
+                                                    r.type === 'allow' ? 'bg-[#d4ff5e]/10 text-[#d4ff5e]' : 'bg-red-500/10 text-red-400'
+                                                )}>
+                                                    {r.type}
+                                                </span>
+                                                <span className="text-neutral-300 truncate">{r.path || '(empty)'}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Sitemaps declared */}
+                    {data.parsed.sitemaps.length > 0 && (
+                        <div className="bg-[#141414] rounded-3xl border border-neutral-800 p-5">
+                            <h4 className="font-bold text-white text-sm mb-3">Declared sitemaps</h4>
+                            <ul className="space-y-1 font-mono text-xs">
+                                {data.parsed.sitemaps.map((s) => (
+                                    <li key={s} className="text-[#d4ff5e] truncate">{s}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* Raw robots.txt */}
+                    <details className="bg-[#141414] rounded-3xl border border-neutral-800 overflow-hidden group">
+                        <summary className="px-5 py-4 cursor-pointer text-sm font-bold text-white flex items-center justify-between">
+                            Raw robots.txt
+                            <span className="text-[10px] text-neutral-500 font-mono">{data.parsed.raw.split('\n').length} lines</span>
+                        </summary>
+                        <pre className="px-5 pb-5 text-xs text-neutral-300 font-mono whitespace-pre-wrap break-all overflow-auto max-h-96">
+                            {data.parsed.raw}
+                        </pre>
+                    </details>
+                </>
             )}
         </div>
     );
